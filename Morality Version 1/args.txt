@@ -1,0 +1,21 @@
+3117,"0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0","0xd1b5cb3a6ea812c8c444e8d7d5692905df097c0e"
+
+0000000000000000000000000000000000000000000000000000000000000c2d0000000000000000000000005c9d8ed10c263f1bb02404145e7ce49cec0d87f0000000000000000000000000d1b5cb3a6ea812c8c444e8d7d5692905df097c0e
+
+https://abi.hashex.org/
+
+--0x6c0A842B32F8b32F7925Da8a0feAc8E339EC6186 == Crowd
+--0xd1b5cb3a6ea812c8c444e8d7d5692905df097c0e == Mo
+
+http://moralitynetworkapi.azurewebsites.net/api/Subscribe/CreateSubscription
+
+ var email = encodeURIComponent("matt19sharp@gmail.com");
+        $.ajax({
+            type: "POST",
+            url: "http://moralitynetworkapi.azurewebsites.net/api/Subscribe/CreateSubscription",
+            data: { email: email, referredByEmail: "", ReferredById: null },
+            contentType: "application/x-www-form-urlencoded",
+            async: true,
+            success: function (data) { alert(JSON.stringify(data)); },
+            error: function (data) { }
+        });
