@@ -57,3 +57,13 @@ My Test ERC20 Contracts (As Deployed on Rinkeby)
 ## Admin (Version 4.0)
 
 **Address:** 0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0 
+
+## Morality Players Contract (Version 2.0) :running:
+
+**Address:** 0xfa76e5a42faca60c3e8823d5c593b5817f4977c8 <br>
+**Constructor Arguments (decoded):** 0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0,"MoralityPlayers","MOP" <br>
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0xfa76e5a42faca60c3e8823d5c593b5817f4977c8
+
+## Admin (Version 2.0)
+
+**Address:** 0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0 

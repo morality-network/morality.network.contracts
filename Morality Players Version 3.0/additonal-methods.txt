@@ -1,0 +1,27 @@
+function getSoldCollectionCount() view public returns(uint256){
+        
+	return allCollectionNames.length;
+    
+}
+    
+    
+
+function getAllTokenIdsForAddress(address _owner) public view returns(uint256[] memory ids){
+        
+	ids = new uint256[](balanceOf(owner));
+        
+	for(uint256 i = 0;i<items.length;i++){
+            
+		MoralityPlayer memory item = items[i];
+            
+		if(ownerOf(item.id) == _owner){
+                
+			ids[i] = item.id;
+            
+		}
+        
+	}
+        
+	return ids;
+    
+}
