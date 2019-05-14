@@ -58,6 +58,34 @@ My Test ERC20 Contracts (As Deployed on Rinkeby)
 
 **Address:** 0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0 
 
+===============================================================================================================
+
+## Morality Contract (Version 5.0) :moneybag:
+
+**Address:** 0xfB74E5EcF5044e743212e8C26d3A1c5CE005424d <br>
+**Constructor Arguments (decoded):** 10000000000000000000000000000 <br>
+**Constructor Arguments (encoded):** 0000000000000000000000000000000000000000204fce5e3e25026110000000 <br>
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0xfB74E5EcF5044e743212e8C26d3A1c5CE005424d
+
+## Morality Storage Contract (Version 5.0) :newspaper:
+
+**Address:** 0x6f686adf784a653be93e158594fef71dedce8296 <br>
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x6f686adf784a653be93e158594fef71dedce8296
+
+## Morality Crowdsale Contract (Version 5.0) :family:
+
+**Library Address:** NONE (Removed) <br>
+**Address:** 0xee37d0fb069d3ea3c38ea34ee278a21c75341fa2 <br>
+**Constructor Arguments (decoded):** 2381,"0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0","0xfB74E5EcF5044e743212e8C26d3A1c5CE005424d"  <br>
+**Constructor Arguments (encoded):**  <br>
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0xee37d0fb069d3ea3c38ea34ee278a21c75341fa2
+
+## Admin (Version 5.0)
+
+**Address:** 0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0 
+
+===============================================================================================================
+
 ## Morality Players Contract (Version 2.0) :running:
 
 **Address:** 0xfa76e5a42faca60c3e8823d5c593b5817f4977c8 <br>
