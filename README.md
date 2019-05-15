@@ -69,8 +69,8 @@ My Test ERC20 Contracts (As Deployed on Rinkeby)
 
 ## Morality Storage Contract (Version 5.0) :newspaper:
 
-**Address:** 0x6f686adf784a653be93e158594fef71dedce8296 <br>
-**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x6f686adf784a653be93e158594fef71dedce8296
+**Address:** 0x2ba55422e6ec989a92d04d38e578f65c13e75874 <br>
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x2ba55422e6ec989a92d04d38e578f65c13e75874
 
 ## Morality Crowdsale Contract (Version 5.0) :family:
 
