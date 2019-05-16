@@ -1,5 +1,8 @@
 pragma solidity ^0.5.7;
 
+// ------------------------------------------------------------------------
+// Math library
+// ------------------------------------------------------------------------
 library SafeMath
 {
   function mul(uint256 _factor1, uint256 _factor2) internal pure returns (uint256 product)
@@ -35,6 +38,9 @@ library SafeMath
   }
 }
 
+// ------------------------------------------------------------------------
+// Address library - shows if the address is a contract
+// ------------------------------------------------------------------------
 library AddressUtils
 {
   function isContract(address _addr) internal view returns (bool addressCheck)
@@ -45,16 +51,25 @@ library AddressUtils
   }
 }
 
+// ------------------------------------------------------------------------
+// ERC165 Interface
+// ------------------------------------------------------------------------
 interface ERC165
 {
   function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 }
 
+// ------------------------------------------------------------------------
+// ERC721TokenReceiver Interface
+// ------------------------------------------------------------------------
 interface ERC721TokenReceiver
 {
   function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes calldata _data) external returns(bytes4);
 }
 
+// ------------------------------------------------------------------------
+// ERC721 Interface
+// ------------------------------------------------------------------------
 interface ERC721
 {
   event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
@@ -72,6 +87,9 @@ interface ERC721
   function isApprovedForAll(address _owner, address _operator) external view returns (bool);
 }
 
+// ------------------------------------------------------------------------
+// Implementation of ERC165
+// ------------------------------------------------------------------------
 contract SupportsInterface is ERC165
 {
   mapping(bytes4 => bool) internal supportedInterfaces;
@@ -87,33 +105,53 @@ contract SupportsInterface is ERC165
   }
 }
 
-contract Ownable
-{
-  string public constant NOT_OWNER = "018001";
-  string public constant ZERO_ADDRESS = "018002";
-  address public owner;
+// ------------------------------------------------------------------------
+// Ownable contract definition
+// This is to allow for admin specific functions
+// ------------------------------------------------------------------------
+contract Ownable {
+    
+  address payable public owner;
+  address payable internal potentialNewOwner;
+  
+  event OwnershipTransferred(address payable indexed _from, address payable indexed _to);
 
-  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
-
-  constructor() public
-  {
+  // ------------------------------------------------------------------------
+  // Upon creation we set the creator as the owner
+  // ------------------------------------------------------------------------
+  constructor() public {
     owner = msg.sender;
   }
 
-  modifier onlyOwner()
-  {
-    require(msg.sender == owner, NOT_OWNER);
+  // ------------------------------------------------------------------------
+  // Set up the modifier to only allow the owner to pass through the condition
+  // ------------------------------------------------------------------------
+  modifier onlyOwner() {
+    require(msg.sender == owner);
     _;
   }
 
-  function transferOwnership(address _newOwner) public onlyOwner
-  {
-    require(_newOwner != address(0), ZERO_ADDRESS);
-    emit OwnershipTransferred(owner, _newOwner);
-    owner = _newOwner;
+  // ------------------------------------------------------------------------
+  // Transfer ownership to another user
+  // ------------------------------------------------------------------------
+  function transferOwnership(address payable _newOwner) public onlyOwner {
+    potentialNewOwner = _newOwner;
   }
+  
+  // ------------------------------------------------------------------------
+  // To ensure correct transfer, the new owner has to confirm new ownership
+  // ------------------------------------------------------------------------
+  function acceptOwnership() public {
+    require(msg.sender == potentialNewOwner);
+    emit OwnershipTransferred(owner, potentialNewOwner);
+    owner = potentialNewOwner;
+  }
+
 }
 
+// ------------------------------------------------------------------------
+// Base contract for the ERC721
+// ------------------------------------------------------------------------
 contract NFToken is ERC721,
   SupportsInterface,
   Ownable
@@ -290,27 +328,42 @@ contract NFToken is ERC721,
   }
 }
 
+// ------------------------------------------------------------------------
+// Token meta data (name, symbol and total in existance (owned)
+// ------------------------------------------------------------------------
 contract TokenMetaData{
     
   string tokenName;
   string tokenSymbol;
   uint256 totalTokens = 0;
   
+  // ------------------------------------------------------------------------
+  // Set name and token upon creation
+  // ------------------------------------------------------------------------
   constructor(string memory _tokenName, string memory _tokenSymbol) public {
      tokenName = _tokenName;
      tokenSymbol = _tokenSymbol;
   }    
   
+  // ------------------------------------------------------------------------
+  // Get token count
+  // ------------------------------------------------------------------------
   function tokenCount() external view returns (uint256)
   {
     return totalTokens;
   }
     
+  // ------------------------------------------------------------------------
+  // Get token name
+  // ------------------------------------------------------------------------
   function name() external view returns (string memory)
   {
     return tokenName;
   }
   
+  // ------------------------------------------------------------------------
+  // Get token symbol
+  // ------------------------------------------------------------------------
   function symbol() external view returns (string memory)
   {
      return tokenSymbol;
@@ -318,8 +371,14 @@ contract TokenMetaData{
   
 }
 
+// ------------------------------------------------------------------------
+// Player contract
+// ------------------------------------------------------------------------
 contract MoralityPlayers is NFToken, TokenMetaData{
     
+	// ------------------------------------------------------------------------
+    // Player
+    // ------------------------------------------------------------------------
     struct MoralityPlayer{
         uint256 id;
         string name; 
