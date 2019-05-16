@@ -3,7 +3,7 @@ Test & Deployable ERC20 & ERC721 Contracts (As Deployed on Rinkeby)
 
 ## Bug Bounty :bug:
 
-If anyone can find bugs or can identify major performance/security issues of contracts in the "Deployable" folder will be given the equivalence of $25 in Eth and 3000 Mo tokens when released. 
+If you can find bugs or can identify major performance/security issues of contracts in the "Deployable" folder, you will be given the equivalence of $25 in Eth and 3000 Mo tokens (the tokens will be given when the token contract is released). 
 You can email any suggestions/changes to: info@morality.network.
 
 User and identified issues:
@@ -12,6 +12,7 @@ NONE
 ## Morality Contracts Index :bookmark_tabs:
 
 **Address:** 0x8783364139cd8bac13f8ebbf0156b761162c21ad <br>
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x8783364139cd8bac13f8ebbf0156b761162c21ad
 
 ## Morality Token Contract :moneybag:
 
