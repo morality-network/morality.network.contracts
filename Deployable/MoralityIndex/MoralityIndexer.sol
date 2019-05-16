@@ -105,6 +105,7 @@ contract MoralityIndexer is Ownable{
     // ------------------------------------------------------------------------
     function updateMoralityCrowdsaleAddress(address _crowdAddress) external onlyOwner{
         address oldAddress = currentMoralityCrowdsaleAddress;
+        currentMoralityCrowdsaleAddress = _crowdAddress;
         emit UpdatedAddress(AddressType.Crowdsale, oldAddress, _crowdAddress, now);
     }
     
@@ -113,6 +114,7 @@ contract MoralityIndexer is Ownable{
     // ------------------------------------------------------------------------
     function updateMoralityStorageAddress(address _storageAddress) external onlyOwner{
         address oldAddress = currentMoralityStorageAddress;
+        currentMoralityStorageAddress = _storageAddress;
         emit UpdatedAddress(AddressType.Storage, oldAddress, _storageAddress, now);
     }
     
@@ -121,6 +123,7 @@ contract MoralityIndexer is Ownable{
     // ------------------------------------------------------------------------
     function updateMoralityPlayersAddress(address _playersAddress) external onlyOwner{
         address oldAddress = currentMoralityPlayersAddress;
+        currentMoralityPlayersAddress = _playersAddress;
         emit UpdatedAddress(AddressType.Players, oldAddress, _playersAddress, now);
     }
     
