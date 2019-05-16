@@ -11,8 +11,8 @@ NONE
 
 ## Morality Contracts Index :bookmark_tabs:
 
-**Address:** 0x8783364139cd8bac13f8ebbf0156b761162c21ad <br>
-**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x8783364139cd8bac13f8ebbf0156b761162c21ad
+**Address:** 0x39c5b1728779ab4385f99e9338f8f5b55bfe90a6 <br>
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x39c5b1728779ab4385f99e9338f8f5b55bfe90a6
 
 ## Morality Token Contract :moneybag:
 
