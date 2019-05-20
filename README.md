@@ -18,18 +18,18 @@ NONE
 ## Morality Token Contract :moneybag:
 
 **Description:** This contract is the morality.network utility token. It will be used both in the crowdsale and the main application as a token of utility representing work done in our network. <br>
-**Address:** 0xBEF439bA23F33b803FDD42F5D5569Da768350bF8 <br>
-**Constructor Arguments (decoded):** 10000000000000000000000000000 <br>
-**Constructor Arguments (encoded):** 0000000000000000000000000000000000000000204fce5e3e25026110000000 <br>
-**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0xBEF439bA23F33b803FDD42F5D5569Da768350bF8
+**Address:** 0x8798D5b962271Ed5B01A72e28FCe24B4753C7466 <br>
+**Constructor Arguments (decoded):** 1000000000000000000000000000 <br>
+**Constructor Arguments (encoded):** 0000000000000000000000000000000000000000033b2e3c9fd0803ce8000000 <br>
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x8798D5b962271Ed5B01A72e28FCe24B4753C7466
 
 ## Morality Crowdsale Contract :family:
 
 **Description:** This contract is the point of call during the morality.network crowdsale. Tokens are allocated to this contract which are available for the public to purchase. If wei is transferred to the contract, a mapped amount of mo (the utility token) is sent back willing that the contract holds enough to honor the payment. <br>
-**Address:** 0x841f127fce10cc87d966e90d9ce87d314ad289fa <br>
-**Constructor Arguments (decoded):** 2381,"0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0","0xBEF439bA23F33b803FDD42F5D5569Da768350bF8"  <br>
-**Constructor Arguments (encoded):** 000000000000000000000000000000000000000000000000000000000000094d0000000000000000000000005c9d8ed10c263f1bb02404145e7ce49cec0d87f0000000000000000000000000bef439ba23f33b803fdd42f5d5569da768350bf8 <br>
-**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x841f127fce10cc87d966e90d9ce87d314ad289fa
+**Address:** 0x2a24995348aa14ebf48af6a7824BbFF3769fcBEa <br>
+**Constructor Arguments (decoded):** 2381,"0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0","0x8798D5b962271Ed5B01A72e28FCe24B4753C7466" <br>
+**Constructor Arguments (encoded):** 000000000000000000000000000000000000000000000000000000000000094d0000000000000000000000005c9d8ed10c263f1bb02404145e7ce49cec0d87f00000000000000000000000008798d5b962271ed5b01a72e28fce24b4753c7466 <br>
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x2a24995348aa14ebf48af6a7824BbFF3769fcBEa
 
 ## Morality Storage Contract :newspaper:
 

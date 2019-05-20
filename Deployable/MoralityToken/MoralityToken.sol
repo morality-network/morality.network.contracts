@@ -1,185 +1,166 @@
 pragma solidity ^0.5.7;
 
-// ------------------------------------------------------------------------
-// Math library
-// ------------------------------------------------------------------------
 library SafeMath {
-    
   function mul(uint256 a, uint256 b) internal pure returns (uint256){
     uint256 c = a * b;
     assert(a == 0 || c / a == b);
     return c;
   }
-
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
-    assert(b > 0);
+    // assert(b > 0); // Solidity automatically throws when dividing by 0
     uint256 c = a / b;
-    assert(a == b * c + a % b);
+    // assert(a == b * c + a % b); // There is no case in which this doesn't hold
     return c;
   }
-
   function sub(uint256 a, uint256 b) internal pure returns (uint256) {
     assert(b <= a);
     return a - b;
   }
-
   function add(uint256 a, uint256 b) internal pure returns (uint256) {
     uint256 c = a + b;
     assert(c >= a);
     return c;
   }
-  
 }
 
-// ------------------------------------------------------------------------
-// Basic token interface
-// ------------------------------------------------------------------------
-contract IERC20 {
-    
-  uint256 public totalSupply;
-  address public burnAddress = 0x0000000000000000000000000000000000000000;
-  function balanceOf(address who) view public returns (uint256);
-  function transfer(address to, uint256 value) public returns (bool);
-  
-  event Transfer(address indexed from, address indexed to, uint256 value);
-  event Minted(address target, uint256 mintedAmount);
-  event Burned(address burner, uint256 burnedAmount);
-  
+contract Ownable {
+  address payable public owner;
+  address payable public potentialNewOwner;
+ 
+  event OwnershipTransferred(address payable indexed _from, address payable indexed _to);
+
+  constructor() internal {
+    owner = msg.sender;
+  }
+  modifier onlyOwner() {
+    require(msg.sender == owner);
+    _;
+  }
+  function transferOwnership(address payable _newOwner) external onlyOwner {
+    potentialNewOwner = _newOwner;
+  }
+  function acceptOwnership() external {
+    require(msg.sender == potentialNewOwner);
+    emit OwnershipTransferred(owner, potentialNewOwner);
+    owner = potentialNewOwner;
+  }
 }
 
-// ------------------------------------------------------------------------
-// Implementation of basic token interface
-// ------------------------------------------------------------------------
-contract ERC20 is IERC20 {
-    
+contract CircuitBreaker is Ownable {
+    bool public inLockdown;
+
+    constructor () internal {
+        inLockdown = false;
+    }
+    modifier outOfLockdown() {
+        require(inLockdown == false);
+        _;
+    }
+    function updateLockdownState(bool state) public{
+        inLockdown = state;
+    }
+}
+
+contract ERC20Interface {
+    uint256 public totalSupply;
+    function balanceOf(address _owner) public view returns (uint256 balance);
+    function transfer(address _to, uint256 _value) public returns (bool success);
+    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
+    function approve(address _spender, uint256 _value) public returns (bool success);
+    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+contract ERC20 is ERC20Interface {
   using SafeMath for uint256;
 
   mapping(address => uint256) public balances;
+  mapping (address => mapping (address => uint256)) allowed;
 
-  // ------------------------------------------------------------------------
-  // Get balance of user
-  // ------------------------------------------------------------------------
   function balanceOf(address _owner) view public returns (uint256 balance) {
     return balances[_owner];
   }
-  
-  // ------------------------------------------------------------------------
-  // Transfer tokens
-  // ------------------------------------------------------------------------
   function transfer(address _to, uint256 _value) public returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
     emit Transfer(msg.sender, _to, _value);
     return true;
   }
-  
-  // ------------------------------------------------------------------------
-  // Create tokens by adding to total supply and crediting the admin/owner
-  // ------------------------------------------------------------------------
-  function mintToken(address _target, uint256 _mintedAmount) public returns(bool){
-	balances[_target] = balances[_target].add(_mintedAmount);
-	totalSupply = totalSupply.add(_mintedAmount);
-	emit Minted(_target, _mintedAmount);
-	emit Transfer(address(0), address(this), _mintedAmount);
-	emit Transfer(address(this), _target, _mintedAmount);
+  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
+    uint256 _allowance = allowed[_from][msg.sender];
+    balances[_to] = balances[_to].add(_value);
+    balances[_from] = balances[_from].sub(_value);
+    allowed[_from][msg.sender] = _allowance.sub(_value);
+    emit Transfer(_from, _to, _value);
+    return true;
+  }
+  function approve(address _spender, uint256 _value) public returns (bool) {
+    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
+    allowed[msg.sender][_spender] = _value;
+    emit Approval(msg.sender, _spender, _value);
+    return true;
+  }
+  function allowance(address _owner, address _spender) view public returns (uint256 remaining) {
+    return allowed[_owner][_spender];
+  }
+}
+
+contract MintableToken is ERC20{
+  function mintToken(address target, uint256 mintedAmount) public returns(bool){
+	balances[target] = balances[target].add(mintedAmount);
+	totalSupply = totalSupply.add(mintedAmount);
+	emit Transfer(address(0), address(this), mintedAmount);
+	emit Transfer(address(this), target, mintedAmount);
 	return true;
   }
-  
-  // ------------------------------------------------------------------------
-  // Burn token by sending to to burn address & removing it from total supply
-  // ------------------------------------------------------------------------
-  function burn(uint256 _burnAmount) public {
+}
+
+contract RecoverableToken is ERC20, Ownable {
+  constructor() public {}
+
+  function recoverTokens(ERC20 token) public {
+    token.transfer(owner, tokensToBeReturned(token));
+  }
+  function tokensToBeReturned(ERC20 token) public view returns (uint256) {
+    return token.balanceOf(address(this));
+  }
+}
+
+contract BurnableToken is ERC20 {
+  address public BURN_ADDRESS;
+
+  event Burned(address burner, uint256 burnedAmount);
+ 
+  function burn(uint256 burnAmount) public {
     address burner = msg.sender;
-    balances[burner] = balances[burner].sub(_burnAmount);
-    totalSupply = totalSupply.sub(_burnAmount);
-    emit Burned(burner, _burnAmount);
-    emit Transfer(burner, burnAddress, _burnAmount);
+    balances[burner] = balances[burner].sub(burnAmount);
+    totalSupply = totalSupply.sub(burnAmount);
+    emit Burned(burner, burnAmount);
+    emit Transfer(burner, BURN_ADDRESS, burnAmount);
   }
-
 }
 
-// ------------------------------------------------------------------------
-// Ownable contract definition
-// This is to allow for admin specific functions
-// ------------------------------------------------------------------------
-contract Ownable {
-    
-  address payable public owner;
-  address payable public potentialNewOwner;
+contract WithdrawableToken is ERC20, Ownable {
+  event WithdrawLog(uint256 balanceBefore, uint256 amount, uint256 balanceAfter);
   
-  event OwnershipTransferred(address payable indexed _from, address payable indexed _to);
-
-  // ------------------------------------------------------------------------
-  // Upon creation we set the creator as the owner
-  // ------------------------------------------------------------------------
-  constructor() public {
-    owner = msg.sender;
-  }
-
-  // ------------------------------------------------------------------------
-  // Set up the modifier to only allow the owner to pass through the condition
-  // ------------------------------------------------------------------------
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
-
-  // ------------------------------------------------------------------------
-  // Transfer ownership to another user
-  // ------------------------------------------------------------------------
-  function transferOwnership(address payable _newOwner) external onlyOwner {
-    potentialNewOwner = _newOwner;
-  }
-  
-  // ------------------------------------------------------------------------
-  // To ensure correct transfer, the new owner has to confirm new ownership
-  // ------------------------------------------------------------------------
-  function acceptOwnership() external {
-    require(msg.sender == potentialNewOwner);
-    emit OwnershipTransferred(owner, potentialNewOwner);
-    owner = potentialNewOwner;
-  }
-
+  function withdraw(uint256 amount) public returns(bool){
+	require(amount <= address(this).balance);
+    address(owner).transfer(amount);
+	emit WithdrawLog(address(owner).balance.sub(amount), amount, address(owner).balance);
+    return true;
+  } 
 }
 
-// ------------------------------------------------------------------------
-// Breaker
-// ------------------------------------------------------------------------
-contract Breaker is Ownable {
-    bool public inLockdown;
-
-    constructor () internal {
-        inLockdown = false;
-    }
-
-    modifier outOfLockdown() {
-        require(inLockdown == false);
-        _;
-    }
-    
-    function updateLockdownState(bool state) external onlyOwner{
-        inLockdown = state;
-    }
-}
-
-// ------------------------------------------------------------------------
-// Morality token definition
-// ------------------------------------------------------------------------
-contract Morality is ERC20, Breaker {
-  
+contract Morality is RecoverableToken, BurnableToken, MintableToken, WithdrawableToken, CircuitBreaker { 
   string public name;
   string public symbol;
   uint256 public decimals;
   address payable public creator;
   
   event LogFundsReceived(address sender, uint amount);
-  event WithdrawLog(uint256 balanceBefore, uint256 amount, uint256 balanceAfter);
   event UpdatedTokenInformation(string newName, string newSymbol);
 
-  // ------------------------------------------------------------------------
-  // Constructor to allow total tokens minted (upon creation) to be set
-  // Name and Symbol can be changed via SetInfo (decided to remove from constructor)
-  // ------------------------------------------------------------------------
   constructor(uint256 _totalTokensToMint) payable public {
     name = "Morality";
     symbol = "MO";
@@ -190,23 +171,22 @@ contract Morality is ERC20, Breaker {
     emit LogFundsReceived(msg.sender, msg.value);
   }
   
-  // ------------------------------------------------------------------------
-  // Payable method allowing ether to be stored in the contract
-  // ------------------------------------------------------------------------
   function() payable external outOfLockdown {
     emit LogFundsReceived(msg.sender, msg.value);
   }
   
-  // ------------------------------------------------------------------------
-  // Transfer token (availabe to all)
-  // ------------------------------------------------------------------------
   function transfer(address _to, uint256 _value) public outOfLockdown returns (bool success){
     return super.transfer(_to, _value);
   }
   
-  // ------------------------------------------------------------------------
-  // Update token information
-  // ------------------------------------------------------------------------
+  function transferFrom(address _from, address _to, uint256 _value) public outOfLockdown returns (bool success){
+    return super.transferFrom(_from, _to, _value);
+  }
+  
+  function approve(address _spender, uint256 _value) public outOfLockdown  returns (bool) {
+    return super.approve(_spender, _value);
+  }
+  
   function setTokenInformation(string calldata _name, string calldata _symbol) onlyOwner external {
     require(msg.sender != creator);
     name = _name;
@@ -214,35 +194,31 @@ contract Morality is ERC20, Breaker {
     emit UpdatedTokenInformation(name, symbol);
   }
   
-  // ------------------------------------------------------------------------
-  // Withdraw ether from the contract
-  // ------------------------------------------------------------------------
-  function withdraw(uint256 amount) onlyOwner external returns(bool){
-	require(amount <= address(this).balance);
-    address(owner).transfer(amount);
-	emit WithdrawLog(address(owner).balance.sub(amount), amount, address(owner).balance);
-    return true;
-  }
-  
-  // ------------------------------------------------------------------------
-  // Mint token
-  // ------------------------------------------------------------------------
-  function mintToken(address target, uint256 mintedAmount) onlyOwner public returns (bool){
-	return super.mintToken(target, mintedAmount);
-  }
-  
-  // ------------------------------------------------------------------------
-  // Burn token (send to burn address)
-  // ------------------------------------------------------------------------
-  function burn(uint256 burnAmount) onlyOwner public{
-    return super.burn(burnAmount);
+  function withdraw(uint256 _amount) onlyOwner public returns(bool){
+	return super.withdraw(_amount);
   }
 
-  // ------------------------------------------------------------------------
-  // To remove contract from blockchain
-  // ------------------------------------------------------------------------
+  function mintToken(address _target, uint256 _mintedAmount) onlyOwner public returns (bool){
+	return super.mintToken(_target, _mintedAmount);
+  }
+  
+  function burn(uint256 _burnAmount) onlyOwner public{
+    return super.burn(_burnAmount);
+  }
+  
+  function updateLockdownState(bool _state) onlyOwner public{
+    super.updateLockdownState(_state);
+  }
+  
+  function recoverTokens(ERC20 _token) onlyOwner public{
+     super.recoverTokens(_token);
+  }
+  
+  function isToken() public pure returns (bool _weAre) {
+    return true;
+  }
+
   function deprecateContract() onlyOwner external{
     selfdestruct(creator);
   }
-  
 }
