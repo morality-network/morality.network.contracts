@@ -87,17 +87,6 @@ interface ERC721
   function isApprovedForAll(address _owner, address _operator) external view returns (bool);
 }
 
-contract ERC20 {
-    uint256 public totalSupply;
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-}
-
 // ------------------------------------------------------------------------
 // Implementation of ERC165
 // ------------------------------------------------------------------------
@@ -159,6 +148,7 @@ contract Ownable {
   }
 
 }
+
 
 // ------------------------------------------------------------------------
 // Breaker
@@ -419,11 +409,8 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
         string collectionName;
         uint itemNumber;
         uint totalInExistance; 
-        uint256 tokenPriceEth;
-        uint256 tokenPriceMo;
+        uint256 tokenPrice;
     }
-    
-    enum PriceType {MO, ETH}
     
     // ------------------------------------------------------------------------
     // Require responses
@@ -448,8 +435,7 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     mapping(string => bool) public collectionNamesUsed;
     mapping(string => uint256) public collectionRunningCount;
     mapping(string => uint256) public collectionTotal;
-    mapping(string => uint256) public collectionEthPricePerUnit;
-    mapping(string => uint256) public collectionMoPricePerUnit;
+    mapping(string => uint256) public collectionPricePerUnit;
     mapping(string => string) public collectionItemName;
     mapping(string => string) public collectionItemDescription;
     mapping(string => uint256) public collectionTotalRaised;
@@ -463,42 +449,39 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     // Wallet to recieve funds when a token is purchased
     // ------------------------------------------------------------------------
     address payable public moralityWallet;
-    ERC20 public moralityToken;
     
     // ------------------------------------------------------------------------
     // Total tokens & wei used to purchase them
     // ------------------------------------------------------------------------
     uint256 public totalTokens = 0;
     uint256 public totalWeiUsed = 0;
-    uint256 public totalMoUsed = 0;
     
     event UpdatedWallet(address indexed updatedBy, address indexed oldWallet, address indexed newWallet);
-    event CollectionCreated(address indexed collectionOwner, string indexed name, string indexed collectionName, uint256 totalToMint, uint256 ethPricePerUnit, uint256 moPricePerUnit);
+    event CollectionCreated(address indexed collectionOwner, string indexed name, string indexed collectionName, uint256 totalToMint, uint256 pricePerUnit);
+    event UpdateTokenPrice(string indexed collectionName, uint256 oldPrice, uint256 newTokenPrice);
     
     // ------------------------------------------------------------------------
     // On creation the wallet, token name and symbol are set
     // ------------------------------------------------------------------------
-    constructor(address _tokenAddress, string memory _tokenName, string memory _tokenSymbol, address payable _moralityWallet) 
+    constructor(address payable _moralityWallet, string memory _tokenName, string memory _tokenSymbol) 
         TokenMetaData(_tokenName,  _tokenSymbol) public {
         moralityWallet = _moralityWallet;
-        moralityToken = ERC20(_tokenAddress);
     }
     
     // ------------------------------------------------------------------------
     // If a collection of tokens needs to be created then 
     // ------------------------------------------------------------------------
-    function createCollection(string calldata _name, string calldata _description, string calldata _collectionName, address _collectionOwner, uint256 _totalToMint, uint256 _ethTokenPrice, uint256 _moTokenPrice) onlyOwner outOfLockdown external{
+    function createCollection(string calldata _name, string calldata _description, string calldata _collectionName, address _collectionOwner, uint256 _totalToMint, uint256 _tokenPrice) onlyOwner outOfLockdown external{
         require(collectionNamesUsed[_collectionName] == false, COLLECT_EXISTS);
         collectionNamesUsed[_collectionName] = true;
         collectionRunningCount[_collectionName] = 0;
         collectionTotal[_collectionName] = _totalToMint;
-        collectionEthPricePerUnit[_collectionName] = _ethTokenPrice;
-        collectionMoPricePerUnit[_collectionName] = _moTokenPrice;
+        collectionPricePerUnit[_collectionName] = _tokenPrice;
         collectionItemName[_collectionName] = _name;
         collectionItemDescription[_collectionName] = _description;
         collectionTotalRaised[_collectionName] = 0;
         allCollectionNames.push(_collectionName);
-        emit CollectionCreated(_collectionOwner, _name, _collectionName, _totalToMint, _ethTokenPrice, _moTokenPrice);
+        emit CollectionCreated(_collectionOwner, _name, _collectionName, _totalToMint, _tokenPrice);
     }
    
     // ------------------------------------------------------------------------
@@ -508,42 +491,25 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     function buyToken(string calldata _collectionName) payable external outOfLockdown nonReentrant{
         require(collectionNamesUsed[_collectionName] == true, COLLECT_DOESNT_EXIST);
         require(collectionRunningCount[_collectionName] < collectionTotal[_collectionName], NO_TOKENS);
-        require(collectionEthPricePerUnit[_collectionName] >= msg.value, PRICE_TOO_LOW);
-        _mintCollectionItem(_collectionName);
+        require(collectionPricePerUnit[_collectionName] >= msg.value, PRICE_TOO_LOW);
+        uint256 id = allPlayers.length;
+        uint256 nextItemNumber = collectionRunningCount[_collectionName].add(1);
+        allPlayers.push(MoralityPlayer(id, collectionItemName[_collectionName], collectionItemDescription[_collectionName], 
+            _collectionName, nextItemNumber, collectionTotal[_collectionName], collectionPricePerUnit[_collectionName]));
+        collectionRunningCount[_collectionName] = nextItemNumber;
+        _mint(msg.sender,id); 
         collectionTotalRaised[_collectionName] = collectionTotalRaised[_collectionName].add(msg.value);
         totalTokens = totalTokens.add(1);
         totalWeiUsed = totalWeiUsed.add(msg.value);
         _forwardFunds();
     }
     
-    function buyTokenWithMorality(ERC20 _tokenContract, string memory _collectionName, address _sender, uint256 _value) public outOfLockdown nonReentrant{
-        require(collectionNamesUsed[_collectionName] == true, COLLECT_DOESNT_EXIST);
-        require(collectionRunningCount[_collectionName] < collectionTotal[_collectionName], NO_TOKENS);
-        require(collectionMoPricePerUnit[_collectionName] >= _value, PRICE_TOO_LOW);
-        require(_tokenContract == moralityToken);
-        require(moralityToken.transferFrom(_sender, moralityWallet, _value));      
-        _mintCollectionItem(_collectionName);
-        collectionTotalRaised[_collectionName] = collectionTotalRaised[_collectionName].add(_value);
-        totalTokens = totalTokens.add(1);
-        totalMoUsed = totalMoUsed.add(_value);
-    }
-    
-    function _mintCollectionItem(string memory _collectionName) internal {
-        uint256 id = allPlayers.length;
-        uint256 nextItemNumber = collectionRunningCount[_collectionName].add(1);
-        allPlayers.push(MoralityPlayer(id, collectionItemName[_collectionName], collectionItemDescription[_collectionName], 
-            _collectionName, nextItemNumber, collectionTotal[_collectionName], collectionEthPricePerUnit[_collectionName],
-            collectionMoPricePerUnit[_collectionName]));
-        collectionRunningCount[_collectionName] = nextItemNumber;
-        _mint(msg.sender,id); 
-    }
-    
     // ------------------------------------------------------------------------
     // Get token by id
     // ------------------------------------------------------------------------
-    function getTokenById(uint256 id) external view returns(uint256, string memory, string memory, string memory, uint256, uint256, uint256, uint256){
+    function getTokenById(uint256 id) external view returns(uint256, string memory, string memory, string memory, uint256, uint256, uint256){
         MoralityPlayer memory player = allPlayers[id];
-        return(player.id, player.name, player.description, player.collectionName, player.itemNumber, player.totalInExistance, player.tokenPriceEth, player.tokenPriceMo);
+        return(player.id, player.name, player.description, player.collectionName, player.itemNumber, player.totalInExistance, player.tokenPrice);
     }
 
     // ------------------------------------------------------------------------
@@ -552,6 +518,16 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     function tokensLeft(string calldata _collectionName) external view returns(uint256){
         if(collectionNamesUsed[_collectionName] == false){ return 0; }
         return collectionTotal[_collectionName].sub(collectionRunningCount[_collectionName]);
+    }
+    
+    // ------------------------------------------------------------------------
+    // Owner can update the price of any outstanding tokens 
+    // ------------------------------------------------------------------------
+    function updateCollectionItemPrice(string calldata _collectionName, uint256 newTokenPrice) onlyOwner external{
+        require(collectionNamesUsed[_collectionName] == true, COLLECT_DOESNT_EXIST);
+        uint256 oldPrice = collectionPricePerUnit[_collectionName];
+        collectionPricePerUnit[_collectionName] = newTokenPrice;
+        emit UpdateTokenPrice(_collectionName, oldPrice, newTokenPrice);
     }
     
     // ------------------------------------------------------------------------

@@ -106,6 +106,17 @@ contract ERC20 is ERC20Interface {
   }
 }
 
+contract ITokenRecipient{
+    function buyTokenWithMorality(ERC20 _tokenContract, string memory _collectionName, address _sender, uint256 _value) public;
+}
+
+contract ExternalContractPayment is ERC20{
+  function approveTokenPurchase(string memory _collectionName, address _tokenAddress, uint256 _value) public{
+    approve(_tokenAddress, _value);
+    ITokenRecipient(_tokenAddress).buyTokenWithMorality(this, _collectionName, msg.sender, _value);
+  }
+}
+
 contract MintableToken is ERC20{
   function mintToken(address target, uint256 mintedAmount) public returns(bool){
 	balances[target] = balances[target].add(mintedAmount);
@@ -152,7 +163,8 @@ contract WithdrawableToken is ERC20, Ownable {
   } 
 }
 
-contract Morality is RecoverableToken, BurnableToken, MintableToken, WithdrawableToken, CircuitBreaker { 
+contract Morality is RecoverableToken, BurnableToken, MintableToken, WithdrawableToken, 
+  ExternalContractPayment, CircuitBreaker { 
   string public name;
   string public symbol;
   uint256 public decimals;
@@ -181,6 +193,17 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
   
   function transferFrom(address _from, address _to, uint256 _value) public outOfLockdown returns (bool success){
     return super.transferFrom(_from, _to, _value);
+  }
+  
+  function multipleTransfer(address[] calldata _toAddresses, uint256[] calldata _toValues) external outOfLockdown returns (uint256) {
+    require(_toAddresses.length == _toValues.length);
+    uint256 updatedCount = 0;
+    for(uint256 i = 0;i<_toAddresses.length;i++){
+       if(super.transfer(_toAddresses[i], _toValues[i]) == true){
+           updatedCount++;
+       }
+    }
+    return updatedCount;
   }
   
   function approve(address _spender, uint256 _value) public outOfLockdown  returns (bool) {
