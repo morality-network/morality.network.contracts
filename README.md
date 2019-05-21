@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="120" height="120" src="https://morality.network/images/brand/mo_coin.png">
+  <img width="180" height="160" src="https://i.postimg.cc/J0mKhXCD/mo.png">
 </p>
 
 # Contracts
