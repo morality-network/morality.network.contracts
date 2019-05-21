@@ -1,8 +1,5 @@
 pragma solidity ^0.5.7;
 
-// ------------------------------------------------------------------------
-// Math library
-// ------------------------------------------------------------------------
 library SafeMath
 {
   function mul(uint256 _factor1, uint256 _factor2) internal pure returns (uint256 product)
@@ -38,9 +35,6 @@ library SafeMath
   }
 }
 
-// ------------------------------------------------------------------------
-// Address library - shows if the address is a contract
-// ------------------------------------------------------------------------
 library AddressUtils
 {
   function isContract(address _addr) internal view returns (bool addressCheck)
@@ -51,25 +45,16 @@ library AddressUtils
   }
 }
 
-// ------------------------------------------------------------------------
-// ERC165 Interface
-// ------------------------------------------------------------------------
 interface ERC165
 {
   function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 }
 
-// ------------------------------------------------------------------------
-// ERC721TokenReceiver Interface
-// ------------------------------------------------------------------------
 interface ERC721TokenReceiver
 {
   function onERC721Received(address _operator, address _from, uint256 _tokenId, bytes calldata _data) external returns(bytes4);
 }
 
-// ------------------------------------------------------------------------
-// ERC721 Interface
-// ------------------------------------------------------------------------
 interface ERC721
 {
   event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
@@ -98,9 +83,6 @@ contract ERC20 {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 }
 
-// ------------------------------------------------------------------------
-// Implementation of ERC165
-// ------------------------------------------------------------------------
 contract SupportsInterface is ERC165
 {
   mapping(bytes4 => bool) internal supportedInterfaces;
@@ -116,54 +98,33 @@ contract SupportsInterface is ERC165
   }
 }
 
-// ------------------------------------------------------------------------
-// Ownable contract definition
-// This is to allow for admin specific functions
-// ------------------------------------------------------------------------
 contract Ownable {
-    
   address payable public owner;
   address payable internal potentialNewOwner;
   
   event OwnershipTransferred(address payable indexed _from, address payable indexed _to);
 
-  // ------------------------------------------------------------------------
-  // Upon creation we set the creator as the owner
-  // ------------------------------------------------------------------------
   constructor() public {
     owner = msg.sender;
   }
 
-  // ------------------------------------------------------------------------
-  // Set up the modifier to only allow the owner to pass through the condition
-  // ------------------------------------------------------------------------
   modifier onlyOwner() {
     require(msg.sender == owner);
     _;
   }
 
-  // ------------------------------------------------------------------------
-  // Transfer ownership to another user
-  // ------------------------------------------------------------------------
   function transferOwnership(address payable _newOwner) public onlyOwner {
     potentialNewOwner = _newOwner;
   }
   
-  // ------------------------------------------------------------------------
-  // To ensure correct transfer, the new owner has to confirm new ownership
-  // ------------------------------------------------------------------------
   function acceptOwnership() public {
     require(msg.sender == potentialNewOwner);
     emit OwnershipTransferred(owner, potentialNewOwner);
     owner = potentialNewOwner;
   }
-
 }
 
-// ------------------------------------------------------------------------
-// Breaker
-// ------------------------------------------------------------------------
-contract Breaker is Ownable {
+contract CircuitBreaker is Ownable {
     bool public inLockdown;
 
     constructor () internal {
@@ -180,12 +141,9 @@ contract Breaker is Ownable {
     }
 }
 
-// ------------------------------------------------------------------------
-// Base contract for the ERC721
-// ------------------------------------------------------------------------
 contract NFToken is ERC721,
   SupportsInterface,
-  Breaker
+  CircuitBreaker
 {
   using SafeMath for uint256;
   using AddressUtils for address;
@@ -359,43 +317,23 @@ contract NFToken is ERC721,
   }
 }
 
-// ------------------------------------------------------------------------
-// Token meta data (name, symbol and total in existance (owned)
-// ------------------------------------------------------------------------
 contract TokenMetaData{
-    
   string public name;
   string public symbol;
   
-  // ------------------------------------------------------------------------
-  // Set name and token upon creation
-  // ------------------------------------------------------------------------
   constructor(string memory _tokenName, string memory _tokenSymbol) public {
      name = _tokenName;
      symbol = _tokenSymbol;
   }    
- 
 }
 
-// ------------------------------------------------------------------------
-// To stop reentrant attacks
-// ------------------------------------------------------------------------
 contract ReentrancyGuard {
     uint256 private _guardCounter;
 
     constructor () internal {
-        // The counter starts at one to prevent changing it from zero to a non-zero
-        // value, which is a more expensive operation.
         _guardCounter = 1;
     }
 
-    /**
-     * @dev Prevents a contract from calling itself, directly or indirectly.
-     * Calling a `nonReentrant` function from another `nonReentrant`
-     * function is not supported. It is possible to prevent this from happening
-     * by making the `nonReentrant` function external, and make it call a
-     * `private` function that does the actual work.
-     */
     modifier nonReentrant() {
         _guardCounter += 1;
         uint256 localCounter = _guardCounter;
@@ -404,14 +342,7 @@ contract ReentrancyGuard {
     }
 }
 
-// ------------------------------------------------------------------------
-// Player contract
-// ------------------------------------------------------------------------
 contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
-    
-	// ------------------------------------------------------------------------
-    // Player
-    // ------------------------------------------------------------------------
     struct MoralityPlayer{
         uint256 id;
         string name; 
@@ -425,26 +356,11 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     
     enum PriceType {MO, ETH}
     
-    // ------------------------------------------------------------------------
-    // Require responses
-    // ------------------------------------------------------------------------
     string constant NO_TOKENS = "No tokens left in this collection";
     string constant COLLECT_EXISTS = "Collection name already exists";
     string constant COLLECT_DOESNT_EXIST = "Collection doesn't exist";
     string constant DOESNT_OWN = "The contract does not own the token";
     string constant PRICE_TOO_LOW = "Token price is higher than provided";
-    
-    // ------------------------------------------------------------------------
-    // All tokens owned by users
-    // ------------------------------------------------------------------------
-    MoralityPlayer[] public allPlayers; 
-    
-    // ------------------------------------------------------------------------
-    // Mappings for quick searches (by collectionName)
-    // These also serve as the holders for unminted tokens
-    // The tokens are created when purchased and collectionRunningCount -
-    // - incremented. The collectionTotal mapping is the limit
-    // ------------------------------------------------------------------------
     mapping(string => bool) public collectionNamesUsed;
     mapping(string => uint256) public collectionRunningCount;
     mapping(string => uint256) public collectionTotal;
@@ -453,21 +369,10 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     mapping(string => string) public collectionItemName;
     mapping(string => string) public collectionItemDescription;
     mapping(string => uint256) public collectionTotalRaised;
-
-    // ------------------------------------------------------------------------
-    // All collection names
-    // ------------------------------------------------------------------------
+    MoralityPlayer[] public allPlayers; 
     string[] public allCollectionNames;
-    
-    // ------------------------------------------------------------------------
-    // Wallet to recieve funds when a token is purchased
-    // ------------------------------------------------------------------------
     address payable public moralityWallet;
     ERC20 public moralityToken;
-    
-    // ------------------------------------------------------------------------
-    // Total tokens & wei used to purchase them
-    // ------------------------------------------------------------------------
     uint256 public totalTokens = 0;
     uint256 public totalWeiUsed = 0;
     uint256 public totalMoUsed = 0;
@@ -475,18 +380,12 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     event UpdatedWallet(address indexed updatedBy, address indexed oldWallet, address indexed newWallet);
     event CollectionCreated(address indexed collectionOwner, string indexed name, string indexed collectionName, uint256 totalToMint, uint256 ethPricePerUnit, uint256 moPricePerUnit);
     
-    // ------------------------------------------------------------------------
-    // On creation the wallet, token name and symbol are set
-    // ------------------------------------------------------------------------
     constructor(address _tokenAddress, string memory _tokenName, string memory _tokenSymbol, address payable _moralityWallet) 
         TokenMetaData(_tokenName,  _tokenSymbol) public {
         moralityWallet = _moralityWallet;
         moralityToken = ERC20(_tokenAddress);
     }
     
-    // ------------------------------------------------------------------------
-    // If a collection of tokens needs to be created then 
-    // ------------------------------------------------------------------------
     function createCollection(string calldata _name, string calldata _description, string calldata _collectionName, address _collectionOwner, uint256 _totalToMint, uint256 _ethTokenPrice, uint256 _moTokenPrice) onlyOwner outOfLockdown external{
         require(collectionNamesUsed[_collectionName] == false, COLLECT_EXISTS);
         collectionNamesUsed[_collectionName] = true;
@@ -501,15 +400,11 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
         emit CollectionCreated(_collectionOwner, _name, _collectionName, _totalToMint, _ethTokenPrice, _moTokenPrice);
     }
    
-    // ------------------------------------------------------------------------
-    // Buy tokens. The tokens in a created collection are minted here.
-    // The token is added to the allPlayers array when minted 
-    // ------------------------------------------------------------------------
     function buyToken(string calldata _collectionName) payable external outOfLockdown nonReentrant{
         require(collectionNamesUsed[_collectionName] == true, COLLECT_DOESNT_EXIST);
         require(collectionRunningCount[_collectionName] < collectionTotal[_collectionName], NO_TOKENS);
         require(collectionEthPricePerUnit[_collectionName] >= msg.value, PRICE_TOO_LOW);
-        _mintCollectionItem(_collectionName);
+        _mintCollectionItem(_collectionName, msg.sender);
         collectionTotalRaised[_collectionName] = collectionTotalRaised[_collectionName].add(msg.value);
         totalTokens = totalTokens.add(1);
         totalWeiUsed = totalWeiUsed.add(msg.value);
@@ -522,58 +417,43 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
         require(collectionMoPricePerUnit[_collectionName] >= _value, PRICE_TOO_LOW);
         require(_tokenContract == moralityToken);
         require(moralityToken.transferFrom(_sender, moralityWallet, _value));      
-        _mintCollectionItem(_collectionName);
+        _mintCollectionItem(_collectionName, _sender);
         collectionTotalRaised[_collectionName] = collectionTotalRaised[_collectionName].add(_value);
         totalTokens = totalTokens.add(1);
         totalMoUsed = totalMoUsed.add(_value);
     }
     
-    function _mintCollectionItem(string memory _collectionName) internal {
+    function _mintCollectionItem(string memory _collectionName, address _sender) internal {
         uint256 id = allPlayers.length;
         uint256 nextItemNumber = collectionRunningCount[_collectionName].add(1);
         allPlayers.push(MoralityPlayer(id, collectionItemName[_collectionName], collectionItemDescription[_collectionName], 
             _collectionName, nextItemNumber, collectionTotal[_collectionName], collectionEthPricePerUnit[_collectionName],
             collectionMoPricePerUnit[_collectionName]));
         collectionRunningCount[_collectionName] = nextItemNumber;
-        _mint(msg.sender,id); 
+        _mint(_sender,id); 
     }
     
-    // ------------------------------------------------------------------------
-    // Get token by id
-    // ------------------------------------------------------------------------
     function getTokenById(uint256 id) external view returns(uint256, string memory, string memory, string memory, uint256, uint256, uint256, uint256){
         MoralityPlayer memory player = allPlayers[id];
         return(player.id, player.name, player.description, player.collectionName, player.itemNumber, player.totalInExistance, player.tokenPriceEth, player.tokenPriceMo);
     }
 
-    // ------------------------------------------------------------------------
-    // Returns how many tokens are left in a collection for purchase
-    // ------------------------------------------------------------------------
     function tokensLeft(string calldata _collectionName) external view returns(uint256){
         if(collectionNamesUsed[_collectionName] == false){ return 0; }
         return collectionTotal[_collectionName].sub(collectionRunningCount[_collectionName]);
     }
     
-    // ------------------------------------------------------------------------
-    // Removes tokens from availability 
-    // ------------------------------------------------------------------------
     function stopAnyMoreOfCollectionBeingSold(string calldata _collectionName) onlyOwner external{
         require(collectionNamesUsed[_collectionName] == true, COLLECT_DOESNT_EXIST);
         collectionTotal[_collectionName] = collectionRunningCount[_collectionName];
     }
     
-    // ------------------------------------------------------------------------
-    // Removes N tokens from availability 
-    // ------------------------------------------------------------------------
     function removeNTokensFromCollection(string calldata _collectionName, uint256 _n) onlyOwner  external{
         require(collectionNamesUsed[_collectionName] == true, COLLECT_DOESNT_EXIST);
         require(collectionTotal[_collectionName].sub(_n) >= collectionRunningCount[_collectionName]);
         collectionTotal[_collectionName] = collectionTotal[_collectionName].sub(_n);
     }
     
-    // ------------------------------------------------------------------------
-    // Returns all tokens owned by a user
-    // ------------------------------------------------------------------------
     function getAllTokenIdsForAddress(address _owner) external view returns(uint256[] memory ids){
     	ids = new uint256[](balanceOf(_owner));
     	for(uint256 i = 0;i<allPlayers.length;i++){
@@ -585,32 +465,20 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     	return ids;
     }
     
-    // ------------------------------------------------------------------------
-    // Count all unique collection names
-    // ------------------------------------------------------------------------
     function getAllCollectionNamesCount() external view returns(uint256){
         return allCollectionNames.length;
     }
     
-    // ------------------------------------------------------------------------
-    // Owner can update wallet where funds are transferred to
-    // ------------------------------------------------------------------------
     function updateMoralityWallet(address payable newWallet) onlyOwner external returns(bool){
         emit UpdatedWallet(msg.sender, moralityWallet, newWallet);
         moralityWallet = newWallet;
         return true;
     }
-
-    // ------------------------------------------------------------------------
-    // Transfer funds to admin
-    // ------------------------------------------------------------------------
+    
     function _forwardFunds() private {
         moralityWallet.transfer(msg.value);
     }
-    
-    // ------------------------------------------------------------------------
-    // To remove contract from blockchain
-    // ------------------------------------------------------------------------
+   
     function deprecateContract() onlyOwner external{
         selfdestruct(owner);
     }
