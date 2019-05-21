@@ -1,7 +1,6 @@
 <p align="center">
   <img width="80" height="80" src="https://morality.network/images/brand/mo_coin.png">
 </p>
-
 # Contracts
 Test & Deployable ERC20 & ERC721 Contracts (As Deployed on Rinkeby)
 
