@@ -342,8 +342,8 @@ contract ReentrancyGuard {
     }
 }
 
-contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
-    struct MoralityPlayer{
+contract MoralityAssets is NFToken, TokenMetaData, ReentrancyGuard{
+    struct MoralityAsset{
         uint256 id;
         string name; 
         string description; 
@@ -369,7 +369,7 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     mapping(string => string) public collectionItemName;
     mapping(string => string) public collectionItemDescription;
     mapping(string => uint256) public collectionTotalRaised;
-    MoralityPlayer[] public allPlayers; 
+    MoralityAsset[] public allAssets; 
     string[] public allCollectionNames;
     address payable public moralityWallet;
     ERC20 public moralityToken;
@@ -424,9 +424,9 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     }
     
     function _mintCollectionItem(string memory _collectionName, address _sender) internal {
-        uint256 id = allPlayers.length;
+        uint256 id = allAssets.length;
         uint256 nextItemNumber = collectionRunningCount[_collectionName].add(1);
-        allPlayers.push(MoralityPlayer(id, collectionItemName[_collectionName], collectionItemDescription[_collectionName], 
+        allAssets.push(MoralityAsset(id, collectionItemName[_collectionName], collectionItemDescription[_collectionName], 
             _collectionName, nextItemNumber, collectionTotal[_collectionName], collectionEthPricePerUnit[_collectionName],
             collectionMoPricePerUnit[_collectionName]));
         collectionRunningCount[_collectionName] = nextItemNumber;
@@ -434,8 +434,8 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     }
     
     function getTokenById(uint256 id) external view returns(uint256, string memory, string memory, string memory, uint256, uint256, uint256, uint256){
-        MoralityPlayer memory player = allPlayers[id];
-        return(player.id, player.name, player.description, player.collectionName, player.itemNumber, player.totalInExistance, player.tokenPriceEth, player.tokenPriceMo);
+        MoralityAsset memory asset = allAssets[id];
+        return(asset.id, asset.name, asset.description, asset.collectionName, asset.itemNumber, asset.totalInExistance, asset.tokenPriceEth, asset.tokenPriceMo);
     }
 
     function tokensLeft(string calldata _collectionName) external view returns(uint256){
@@ -456,10 +456,10 @@ contract MoralityPlayers is NFToken, TokenMetaData, ReentrancyGuard{
     
     function getAllTokenIdsForAddress(address _owner) external view returns(uint256[] memory ids){
     	ids = new uint256[](balanceOf(_owner));
-    	for(uint256 i = 0;i<allPlayers.length;i++){
-    		MoralityPlayer memory player = allPlayers[i];
-    		if(ownerOf(player.id) == _owner){
-    			ids[i] = player.id;
+    	for(uint256 i = 0;i<allAssets.length;i++){
+    		MoralityAsset memory asset = allAssets[i];
+    		if(ownerOf(asset.id) == _owner){
+    			ids[i] = asset.id;
     		}
     	}
     	return ids;

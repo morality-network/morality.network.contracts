@@ -53,7 +53,7 @@ contract MoralityIndexer is Ownable{
     address private currentMoralityTokenAddress = address(0);
     address private currentMoralityCrowdsaleAddress = address(0);
     address private currentMoralityStorageAddress = address(0);
-    address private currentMoralityPlayersAddress = address(0);
+    address private currentMoralityAssetsAddress = address(0);
     
     enum AddressType { Token, Crowdsale, Storage, Players }
     
@@ -86,9 +86,9 @@ contract MoralityIndexer is Ownable{
     // ------------------------------------------------------------------------
     // Get the players address
     // ------------------------------------------------------------------------
-    function getMoralityPlayersAddress() external view returns(address){
-        require(currentMoralityPlayersAddress != address(0));
-        return currentMoralityPlayersAddress;
+    function getMoralityAssetsAddress() external view returns(address){
+        require(currentMoralityAssetsAddress != address(0));
+        return currentMoralityAssetsAddress;
     }
     
     // ------------------------------------------------------------------------
@@ -121,9 +121,9 @@ contract MoralityIndexer is Ownable{
     // ------------------------------------------------------------------------
     // Update the players address
     // ------------------------------------------------------------------------
-    function updateMoralityPlayersAddress(address _playersAddress) external onlyOwner{
-        address oldAddress = currentMoralityPlayersAddress;
-        currentMoralityPlayersAddress = _playersAddress;
+    function updateMoralityAssetsAddress(address _playersAddress) external onlyOwner{
+        address oldAddress = currentMoralityAssetsAddress;
+        currentMoralityAssetsAddress = _playersAddress;
         emit UpdatedAddress(AddressType.Players, oldAddress, _playersAddress, now);
     }
     
