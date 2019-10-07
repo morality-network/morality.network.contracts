@@ -1,4 +1,4 @@
-pragma solidity ^0.5.7;
+pragma solidity ^0.5.11;
 
 contract IERC20 {
   uint256 public totalSupply;
