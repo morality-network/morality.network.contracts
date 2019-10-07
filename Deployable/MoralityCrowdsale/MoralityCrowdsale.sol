@@ -115,7 +115,7 @@ contract Crowdsale is Breaker, ReentrancyGuard {
     event TokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
     event RateUpdate(uint256 rate);
 
-    constructor (uint256 rate, address payable wallet, IERC20 token) public {
+    constructor (address payable wallet, uint256 rate, IERC20 token) public {
         require(rate > 0);
         require(wallet != address(0));
         require(address(token) != address(0));
