@@ -113,6 +113,7 @@ contract Crowdsale is Breaker, ReentrancyGuard {
     uint256 private _weiRaised;
 
     event TokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
+    event RateUpdate(uint256 rate);
 
     constructor (uint256 rate, address payable wallet, IERC20 token) public {
         require(rate > 0);
@@ -157,6 +158,11 @@ contract Crowdsale is Breaker, ReentrancyGuard {
         emit TokensPurchased(msg.sender, beneficiary, weiAmount, tokens);
         //Forwad the funds to admin
         _forwardFunds();
+    }
+    
+    function setRate(uint256 rate) onlyOwner public{
+        _rate = rate;
+        emit RateUpdate(rate);
     }
 
     function _preValidatePurchase(address beneficiary, uint256 weiAmount) internal pure {
