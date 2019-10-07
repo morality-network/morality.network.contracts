@@ -160,9 +160,9 @@ contract Crowdsale is Breaker, ReentrancyGuard {
         _forwardFunds();
     }
     
-    function setRate(uint256 rate) onlyOwner public{
-        _rate = rate;
-        emit RateUpdate(rate);
+    function setRate(uint256 newRate) onlyOwner external{
+        _rate = newRate;
+        emit RateUpdate(newRate);
     }
 
     function _preValidatePurchase(address beneficiary, uint256 weiAmount) internal pure {
