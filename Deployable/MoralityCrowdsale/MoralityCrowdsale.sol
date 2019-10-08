@@ -111,6 +111,9 @@ contract Crowdsale is Breaker, ReentrancyGuard {
     address payable private _wallet;
     uint256 private _rate;
     uint256 private _weiRaised;
+    
+    string public name;
+    string public symbol;
 
     event TokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
     event RateUpdate(uint256 rate);
@@ -123,6 +126,9 @@ contract Crowdsale is Breaker, ReentrancyGuard {
         _rate = rate;
         _wallet = wallet;
         _token = token;
+	
+	name = "Morality Crowdsale";
+	symbol = "MO"
     }
 
     function () external payable {
