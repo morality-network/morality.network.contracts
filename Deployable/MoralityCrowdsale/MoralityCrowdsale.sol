@@ -128,7 +128,7 @@ contract Crowdsale is Breaker, ReentrancyGuard {
         _token = token;
 	
 	name = "Morality Crowdsale";
-	symbol = "MO"
+	symbol = "MO";
     }
 
     function () external payable {
