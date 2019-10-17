@@ -103,7 +103,7 @@ contract CircuitBreaker is AdminOnly {
     }
 }
 
-contract Crowdsale is CircuitBreaker, ReentrancyGuard {
+contract MoralityCrowdsale is CircuitBreaker, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
