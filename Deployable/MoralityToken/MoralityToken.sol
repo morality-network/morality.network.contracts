@@ -81,6 +81,7 @@ contract ERC20 is ERC20Interface {
   function balanceOf(address _owner) view public returns (uint256 balance) {
     return balances[_owner];
   }
+  
   function transfer(address _to, uint256 _value) public returns (bool) {
     balances[msg.sender] = balances[msg.sender].sub(_value);
     balances[_to] = balances[_to].add(_value);
@@ -89,9 +90,9 @@ contract ERC20 is ERC20Interface {
   }
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     uint256 _allowance = allowed[_from][msg.sender];
-    balances[_to] = balances[_to].add(_value);
-    balances[_from] = balances[_from].sub(_value);
     allowed[_from][msg.sender] = _allowance.sub(_value);
+    balances[_from] = balances[_from].sub(_value);
+    balances[_to] = balances[_to].add(_value);
     emit Transfer(_from, _to, _value);
     return true;
   }
@@ -110,14 +111,35 @@ contract ITokenRecipient{
     function buyTokenWithMorality(ERC20 _tokenContract, string memory _collectionName, address _sender, uint256 _value) public;
 }
 
-contract ExternalContractPayment is ERC20{
-  function approveTokenPurchase(string memory _collectionName, address _tokenAddress, uint256 _value) public{
-    approve(_tokenAddress, _value);
-    ITokenRecipient(_tokenAddress).buyTokenWithMorality(this, _collectionName, msg.sender, _value);
-  }
-}
+contract ManagedToken is ERC20, Ownable {
+  address public BURN_ADDRESS;
 
-contract MintableToken is ERC20{
+  event Burned(address burner, uint256 burnedAmount);
+  event WithdrawLog(uint256 balanceBefore, uint256 amount, uint256 balanceAfter);
+ 
+  function burn(uint256 burnAmount) public onlyOwner {
+    address burner = msg.sender;
+    balances[burner] = balances[burner].sub(burnAmount);
+    totalSupply = totalSupply.sub(burnAmount);
+    emit Burned(burner, burnAmount);
+    emit Transfer(burner, BURN_ADDRESS, burnAmount);
+  }
+  
+  function withdraw(uint256 amount) public onlyOwner returns(bool){
+	require(amount <= address(this).balance);
+    address(owner).transfer(amount);
+	emit WithdrawLog(address(owner).balance.sub(amount), amount, address(owner).balance);
+    return true;
+  } 
+  
+  function recoverTokens(ERC20 token) public onlyOwner {
+    token.transfer(owner, tokensToBeReturned(token));
+  }
+  
+  function tokensToBeReturned(ERC20 token) public view returns (uint256) {
+    return token.balanceOf(address(this));
+  }
+  
   function mintToken(address target, uint256 mintedAmount) public returns(bool){
 	balances[target] = balances[target].add(mintedAmount);
 	totalSupply = totalSupply.add(mintedAmount);
@@ -125,46 +147,14 @@ contract MintableToken is ERC20{
 	emit Transfer(address(this), target, mintedAmount);
 	return true;
   }
-}
-
-contract RecoverableToken is ERC20, Ownable {
-  constructor() public {}
-
-  function recoverTokens(ERC20 token) public {
-    token.transfer(owner, tokensToBeReturned(token));
-  }
-  function tokensToBeReturned(ERC20 token) public view returns (uint256) {
-    return token.balanceOf(address(this));
-  }
-}
-
-contract BurnableToken is ERC20 {
-  address public BURN_ADDRESS;
-
-  event Burned(address burner, uint256 burnedAmount);
- 
-  function burn(uint256 burnAmount) public {
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(burnAmount);
-    totalSupply = totalSupply.sub(burnAmount);
-    emit Burned(burner, burnAmount);
-    emit Transfer(burner, BURN_ADDRESS, burnAmount);
-  }
-}
-
-contract WithdrawableToken is ERC20, Ownable {
-  event WithdrawLog(uint256 balanceBefore, uint256 amount, uint256 balanceAfter);
   
-  function withdraw(uint256 amount) public returns(bool){
-	require(amount <= address(this).balance);
-    address(owner).transfer(amount);
-	emit WithdrawLog(address(owner).balance.sub(amount), amount, address(owner).balance);
-    return true;
-  } 
+  function approveTokenPurchase(string memory _collectionName, address _tokenAddress, uint256 _value) public{
+    approve(_tokenAddress, _value);
+    ITokenRecipient(_tokenAddress).buyTokenWithMorality(this, _collectionName, msg.sender, _value);
+  }
 }
 
-contract Morality is RecoverableToken, BurnableToken, MintableToken, WithdrawableToken, 
-  ExternalContractPayment, CircuitBreaker { 
+contract Morality is ManagedToken, CircuitBreaker { 
   string public name;
   string public symbol;
   uint256 public decimals;
@@ -237,7 +227,7 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
      super.recoverTokens(_token);
   }
   
-  function isToken() public pure returns (bool _weAre) {
+  function isToken() external pure returns (bool _weAre) {
     return true;
   }
 
