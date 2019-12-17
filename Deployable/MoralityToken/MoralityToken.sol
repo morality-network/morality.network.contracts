@@ -141,15 +141,15 @@ contract ManagedToken is ERC20, Ownable {
   }
   
   function mintToken(address target, uint256 mintedAmount) public returns(bool){
-	balances[target] = balances[target].add(mintedAmount);
-	totalSupply = totalSupply.add(mintedAmount);
-	emit Transfer(address(0), address(this), mintedAmount);
-	emit Transfer(address(this), target, mintedAmount);
-	return true;
+    balances[target] = balances[target].add(mintedAmount);
+    totalSupply = totalSupply.add(mintedAmount);
+    emit Transfer(address(0), address(this), mintedAmount);
+    emit Transfer(address(this), target, mintedAmount);
+    return true;
   }
   
   function approveTokenPurchase(string memory _collectionName, address _tokenAddress, uint256 _value) public{
-    approve(_tokenAddress, _value);
+    require(approve(_tokenAddress, _value) == true);
     ITokenRecipient(_tokenAddress).buyTokenWithMorality(this, _collectionName, msg.sender, _value);
   }
 }
