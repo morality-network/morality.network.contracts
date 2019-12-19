@@ -25,7 +25,7 @@ NONE
 **Address:** 0xcE4C3fA41B696509fb77FBC3FDd2b74Cac37535B <br>
 **Constructor Arguments (decoded):** 1700000000000000000000000000 <br>
 **Constructor Arguments (encoded):** 0000000000000000000000000000000000000000057e3500a948da0124000000 <br>
-**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x0CD2394671dc9917f83133D655ba349B588A3b04
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x7dd454d6269b4ebd5807cb38284a7636d25e118f
 
 ## Morality Crowdsale Contract :family:
 
@@ -33,7 +33,7 @@ NONE
 **Address:** 0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0,1,0xcE4C3fA41B696509fb77FBC3FDd2b74Cac37535B <br>
 **Constructor Arguments (decoded):** 0x7dd454d6269b4ebd5807cb38284a7636d25e118f <br>
 **Constructor Arguments (encoded):** 0000000000000000000000005c9d8ed10c263f1bb02404145e7ce49cec0d87f00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000ce4c3fa41b696509fb77fbc3fdd2b74cac37535b <br>
-**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x96572594Ac71080c0D3839AB4DF38cCA1a7fa8B0
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0,1,0xcE4C3fA41B696509fb77FBC3FDd2b74Cac37535B
 
 ## Morality Storage Contract :newspaper:
 
