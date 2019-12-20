@@ -1,4 +1,4 @@
-pragma solidity ^0.5.7;
+pragma solidity ^0.5.12;
 
 // ------------------------------------------------------------------------
 // Ownable contract definition
@@ -54,8 +54,9 @@ contract MoralityIndexer is Ownable{
     address private currentMoralityCrowdsaleAddress = address(0);
     address private currentMoralityStorageAddress = address(0);
     address private currentMoralityAssetsAddress = address(0);
+    address private currentMoralityDexAddress = address(0);
     
-    enum AddressType { Token, Crowdsale, Storage, Players }
+    enum AddressType { Token, Crowdsale, Storage, Players, Dex }
     
     event UpdatedAddress(AddressType typeOfAddress, address oldAddress, address newAddress, uint256 timestamp);
     
@@ -92,6 +93,14 @@ contract MoralityIndexer is Ownable{
     }
     
     // ------------------------------------------------------------------------
+    // Get the dex address
+    // ------------------------------------------------------------------------
+    function getMoralityDexAddress() external view returns(address){
+        require(currentMoralityDexAddress != address(0));
+        return currentMoralityDexAddress;
+    }
+    
+    // ------------------------------------------------------------------------
     // Update the token address
     // ------------------------------------------------------------------------
     function updateMoralityTokenAddress(address _tokenAddress) external onlyOwner{
@@ -125,6 +134,15 @@ contract MoralityIndexer is Ownable{
         address oldAddress = currentMoralityAssetsAddress;
         currentMoralityAssetsAddress = _playersAddress;
         emit UpdatedAddress(AddressType.Players, oldAddress, _playersAddress, now);
+    }
+    
+    // ------------------------------------------------------------------------
+    // Update the dex address
+    // ------------------------------------------------------------------------
+    function updateMoralityDexAddress(address _tokenAddress) external onlyOwner{
+        address oldAddress = currentMoralityDexAddress;
+        currentMoralityDexAddress = _tokenAddress;
+        emit UpdatedAddress(AddressType.Token, oldAddress, _tokenAddress, now);
     }
     
     // ------------------------------------------------------------------------
