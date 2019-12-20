@@ -25,9 +25,9 @@ NONE
 **Address:** 0xcE4C3fA41B696509fb77FBC3FDd2b74Cac37535B <br>
 **Constructor Arguments (decoded):** 1700000000000000000000000000 <br>
 **Constructor Arguments (encoded):** 0000000000000000000000000000000000000000057e3500a948da0124000000 <br>
-**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x7dd454d6269b4ebd5807cb38284a7636d25e118f 
-**Test Suite Results (Ropsten):** https://testsuite.net/report.html?token=0xd1B5cB3A6EA812C8c444E8D7D5692905Df097c0E 
-**Link on Ropsten.Etherscan:** https://ropsten.etherscan.io/address/0xd1b5cb3a6ea812c8c444e8d7d5692905df097c0e 
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x7dd454d6269b4ebd5807cb38284a7636d25e118f <br>
+**Test Suite Results (Ropsten):** https://testsuite.net/report.html?token=0xd1B5cB3A6EA812C8c444E8D7D5692905Df097c0E <br>
+**Link on Ropsten.Etherscan:** https://ropsten.etherscan.io/address/0xd1b5cb3a6ea812c8c444e8d7d5692905df097c0e <br>
 
 ## Morality Crowdsale Contract :family:
 
