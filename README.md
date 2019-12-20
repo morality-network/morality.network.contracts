@@ -32,8 +32,8 @@ NONE
 ## Morality Crowdsale Contract :family:
 
 **Description:** This contract is the point of call during the morality.network crowdsale. Tokens are allocated to this contract which are available for the public to purchase. If wei is transferred to the contract, a mapped amount of mo (the utility token) is sent back willing that the contract holds enough to honor the payment. <br><br>
-**Address:** 0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0,1,0xcE4C3fA41B696509fb77FBC3FDd2b74Cac37535B <br>
-**Constructor Arguments (decoded):** 0x7dd454d6269b4ebd5807cb38284a7636d25e118f <br>
+**Address:** 0x7dd454d6269b4ebd5807cb38284a7636d25e118f <br>
+**Constructor Arguments (decoded):** 0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0,1,0xcE4C3fA41B696509fb77FBC3FDd2b74Cac37535B <br>
 **Constructor Arguments (encoded):** 0000000000000000000000005c9d8ed10c263f1bb02404145e7ce49cec0d87f00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000ce4c3fa41b696509fb77fbc3fdd2b74cac37535b <br>
 **Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x5c9D8ed10c263F1bB02404145E7cE49CEC0D87F0,1,0xcE4C3fA41B696509fb77FBC3FDd2b74Cac37535B
 
