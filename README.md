@@ -16,13 +16,13 @@ NONE
 ## Morality Contracts Index :bookmark_tabs:
 
 **Description:** This is a contract that will point to all the latest versions of morality.networks working contracts. <br><br>
-**Address:** 0x3F73D4eB0D8cb9e5fFc850807F49380d6287B450 <br>
-**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x3F73D4eB0D8cb9e5fFc850807F49380d6287B450
+**Address:** 0xb8f44da02ae0553792f71dfacf9233fdc83a841c <br>
+**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0xb8f44da02ae0553792f71dfacf9233fdc83a841c
 
 ## Morality Token Contract :moneybag:
 
 **Description:** This contract is the morality.network utility token. It will be used both in the crowdsale and the main application as a token of utility representing work done in our network. <br><br>
-**Address:** 0xcE4C3fA41B696509fb77FBC3FDd2b74Cac37535B <br>
+**Address:** 0x7DD454d6269B4Ebd5807cB38284A7636d25E118F <br>
 **Constructor Arguments (decoded):** 1700000000000000000000000000 <br>
 **Constructor Arguments (encoded):** 0000000000000000000000000000000000000000057e3500a948da0124000000 <br>
 **Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0x7dd454d6269b4ebd5807cb38284a7636d25e118f <br>
