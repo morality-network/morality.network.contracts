@@ -194,20 +194,25 @@ contract ITradableToken{
 
 contract ExternalContractInvocations is ERC20{
      
-  event ApprovedAndInvokedExternalPurchaseByName(address tokenAddress, string collectionName, address buyer, uint256 value, uint256 time);
-  event ApprovedAndInvokedExternalPurchase(address tokenAddress, address buyer, uint256 value, uint256 time);
+  enum ExternalPurchaseType{
+      Item,
+      Token
+  }
+  
+  event ApprovedAndInvokedExternalPurchase(ExternalPurchaseType typeOfPurchase, address tokenAddress, string collectionName, address buyer, uint256 value, uint256 time);
+  event ApprovedAndInvokedExternalPurchase(ExternalPurchaseType typeOfPurchase, address tokenAddress, address buyer, uint256 value, uint256 time);
      
-  function approveAndInvokePurchaseByName(address tokenAddress, string memory collectionName, uint256 value) public returns(bool){
+  function approveAndInvokePurchase(address tokenAddress, string memory collectionName, uint256 value) public returns(bool){
     require(approve(tokenAddress, value) == true);
     require(IPurchasableToken(tokenAddress).purchase(this, collectionName, msg.sender, value) == true);
-    emit ApprovedAndInvokedExternalPurchaseByName(tokenAddress, collectionName, msg.sender, value, now);
+    emit ApprovedAndInvokedExternalPurchase(ExternalPurchaseType.Item, tokenAddress, collectionName, msg.sender, value, now);
     return true;
   }
   
   function approveAndInvokePurchase(address tokenAddress, uint256 value) public returns(bool){
     require(approve(tokenAddress, value) == true);
     require(ITradableToken(tokenAddress).purchase(address(this), msg.sender, value) == true);
-    emit ApprovedAndInvokedExternalPurchase(tokenAddress, msg.sender, value, now);
+    emit ApprovedAndInvokedExternalPurchase(ExternalPurchaseType.Token, tokenAddress, msg.sender, value, now);
     return true;
   }
 }
@@ -258,7 +263,7 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
   }
   
   function approveAndInvokePurchase(address tokenAddress, string memory collectionName, uint256 value) public ecpvcLockdown applicationLockdown returns(bool){
-    return super.approveAndInvokePurchaseByName(tokenAddress, collectionName, value);
+    return super.approveAndInvokePurchase(tokenAddress, collectionName, value);
   }
   
   function approveAndInvokePurchase(address tokenAddress, uint256 value) public ecpLockdown applicationLockdown returns(bool){
