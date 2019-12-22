@@ -50,11 +50,11 @@ contract Ownable {
 
 contract CircuitBreaker is Ownable {
     
-    bool public isApplicationLockedDown;
+    bool private isApplicationLockedDown;
     // External contract payment via collection
-    bool public isECPVCLockedDown;
+    bool private isECPVCLockedDown;
     // External contract payment
-    bool public isECPLockedDown;
+    bool private isECPLockedDown;
 
     constructor () internal {
         isApplicationLockedDown = false;
