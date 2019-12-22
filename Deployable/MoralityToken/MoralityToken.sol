@@ -73,13 +73,13 @@ contract CircuitBreaker is Ownable {
         require(isECPVCLockedDown == false);
         _;
     }
-    function updateApplicationLockdownState(bool state) public{
+    function updateApplicationLockdownState(bool state) public onlyOwner{
        isApplicationLockedDown = state;
     }
-    function updateECPCVLockdownState(bool state) public{
+    function updateECPCVLockdownState(bool state) public onlyOwner{
         isECPVCLockedDown = state;
     }
-    function updateECPLockdownState(bool state) public{
+    function updateECPLockdownState(bool state) public onlyOwner{
         isECPVCLockedDown = state;
     }
 }
@@ -129,11 +129,11 @@ contract ERC20 is ERC20Interface {
   }
 }
 
-contract MintableToken is ERC20{
+contract MintableToken is ERC20, Ownable{
     
   event Minted(address target, uint mintedAmount, uint time);
   
-  function mintToken(address target, uint256 mintedAmount) public returns(bool){
+  function mintToken(address target, uint256 mintedAmount) public onlyOwner returns(bool){
 	balances[target] = balances[target].add(mintedAmount);
 	totalSupply = totalSupply.add(mintedAmount);
 	emit Transfer(address(0), address(this), mintedAmount);
@@ -147,7 +147,7 @@ contract RecoverableToken is ERC20, Ownable {
    
   event RecoveredTokens(address token, address owner, uint tokens, uint time);
   
-  function recoverTokens(ERC20 token) public {
+  function recoverTokens(ERC20 token) public onlyOwner {
     uint tokens = tokensToBeReturned(token);
     require(token.transfer(owner, tokens) == true);
     emit RecoveredTokens(address(token), owner,  tokens, now);
@@ -157,13 +157,13 @@ contract RecoverableToken is ERC20, Ownable {
   }
 }
 
-contract BurnableToken is ERC20 {
+contract BurnableToken is ERC20, Ownable {
     
   address public BURN_ADDRESS;
 
   event Burned(address burner, uint256 burnedAmount);
  
-  function burn(uint256 burnAmount) public {
+  function burn(uint256 burnAmount) public onlyOwner {
     address burner = msg.sender;
     balances[burner] = balances[burner].sub(burnAmount);
     totalSupply = totalSupply.sub(burnAmount);
@@ -176,7 +176,7 @@ contract WithdrawableToken is ERC20, Ownable {
     
   event WithdrawLog(uint256 balanceBefore, uint256 amount, uint256 balanceAfter);
   
-  function withdraw(uint256 amount) public returns(bool){
+  function withdraw(uint256 amount) public onlyOwner returns(bool){
 	require(amount <= address(this).balance);
     address(owner).transfer(amount);
 	emit WithdrawLog(address(owner).balance.sub(amount), amount, address(owner).balance);
@@ -257,11 +257,11 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
     return super.approve(_spender, _value);
   }
   
-  function approveAndInvokePurchase(address tokenAddress, string memory collectionName, uint256 value) public ecpvcLockdown returns(bool){
+  function approveAndInvokePurchase(address tokenAddress, string memory collectionName, uint256 value) public ecpvcLockdown applicationLockdown returns(bool){
     return super.approveAndInvokePurchaseByName(tokenAddress, collectionName, value);
   }
   
-  function approveAndInvokePurchase(address tokenAddress, uint256 value) public ecpLockdown returns(bool){
+  function approveAndInvokePurchase(address tokenAddress, uint256 value) public ecpLockdown applicationLockdown returns(bool){
     return super.approveAndInvokePurchase(tokenAddress, value);
   }
   
