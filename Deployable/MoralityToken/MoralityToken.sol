@@ -99,7 +99,7 @@ contract ERC20 is ERC20Interface {
   using SafeMath for uint256;
 
   mapping(address => uint256) public balances;
-  mapping (address => mapping (address => uint256)) allowed;
+  mapping (address => mapping (address => uint256)) private allowed;
 
   function balanceOf(address _owner) view public returns (uint256 balance) {
     return balances[_owner];
@@ -112,9 +112,9 @@ contract ERC20 is ERC20Interface {
   }
   function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
     uint256 _allowance = allowed[_from][msg.sender];
-    balances[_to] = balances[_to].add(_value);
     balances[_from] = balances[_from].sub(_value);
     allowed[_from][msg.sender] = _allowance.sub(_value);
+    balances[_to] = balances[_to].add(_value);
     emit Transfer(_from, _to, _value);
     return true;
   }
