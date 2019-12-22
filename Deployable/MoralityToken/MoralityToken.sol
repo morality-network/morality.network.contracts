@@ -80,7 +80,7 @@ contract CircuitBreaker is Ownable {
         isECPVCLockedDown = state;
     }
     function updateECPLockdownState(bool state) public onlyOwner{
-        isECPVCLockedDown = state;
+        isECPLockedDown = state;
     }
 }
 
