@@ -38,8 +38,8 @@ contract Ownable {
     require(msg.sender == owner);
     _;
   }
-  function transferOwnership(address payable _newOwner) external onlyOwner {
-    potentialNewOwner = _newOwner;
+  function transferOwnership(address payable newOwner) external onlyOwner {
+    potentialNewOwner = newOwner;
   }
   function acceptOwnership() external {
     require(msg.sender == potentialNewOwner);
@@ -86,13 +86,13 @@ contract CircuitBreaker is Ownable {
 
 contract ERC20Interface {
     uint256 public totalSupply;
-    function balanceOf(address _owner) public view returns (uint256 balance);
-    function transfer(address _to, uint256 _value) public returns (bool success);
-    function transferFrom(address _from, address _to, uint256 _value) public returns (bool success);
-    function approve(address _spender, uint256 _value) public returns (bool success);
-    function allowance(address _owner, address _spender) public view returns (uint256 remaining);
-    event Transfer(address indexed _from, address indexed _to, uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    function balanceOf(address owner) public view returns (uint256 balance);
+    function transfer(address to, uint256 value) public returns (bool success);
+    function transferFrom(address from, address to, uint256 value) public returns (bool success);
+    function approve(address spender, uint256 value) public returns (bool success);
+    function allowance(address owner, address spender) public view returns (uint256 remaining);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
 contract ERC20 is ERC20Interface {
@@ -101,31 +101,31 @@ contract ERC20 is ERC20Interface {
   mapping(address => uint256) public balances;
   mapping (address => mapping (address => uint256)) private allowed;
 
-  function balanceOf(address _owner) view public returns (uint256 balance) {
-    return balances[_owner];
+  function balanceOf(address owner) view public returns (uint256 balance) {
+    return balances[owner];
   }
-  function transfer(address _to, uint256 _value) public returns (bool) {
-    balances[msg.sender] = balances[msg.sender].sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(msg.sender, _to, _value);
+  function transfer(address to, uint256 value) public returns (bool) {
+    balances[msg.sender] = balances[msg.sender].sub(value);
+    balances[to] = balances[to].add(value);
+    emit Transfer(msg.sender, to, value);
     return true;
   }
-  function transferFrom(address _from, address _to, uint256 _value) public returns (bool) {
-    uint256 _allowance = allowed[_from][msg.sender];
-    balances[_from] = balances[_from].sub(_value);
-    allowed[_from][msg.sender] = _allowance.sub(_value);
-    balances[_to] = balances[_to].add(_value);
-    emit Transfer(_from, _to, _value);
+  function transferFrom(address from, address to, uint256 value) public returns (bool) {
+    uint256 allowance = allowed[from][msg.sender];
+    balances[from] = balances[from].sub(value);
+    allowed[from][msg.sender] = allowance.sub(value);
+    balances[to] = balances[to].add(value);
+    emit Transfer(from, to, value);
     return true;
   }
-  function approve(address _spender, uint256 _value) public returns (bool) {
-    require((_value == 0) || (allowed[msg.sender][_spender] == 0));
-    allowed[msg.sender][_spender] = _value;
-    emit Approval(msg.sender, _spender, _value);
+  function approve(address spender, uint256 value) public returns (bool) {
+    require((value == 0) || (allowed[msg.sender][spender] == 0));
+    allowed[msg.sender][spender] = value;
+    emit Approval(msg.sender, spender, value);
     return true;
   }
-  function allowance(address _owner, address _spender) view public returns (uint256 remaining) {
-    return allowed[_owner][_spender];
+  function allowance(address owner, address spender) view public returns (uint256 remaining) {
+    return allowed[owner][spender];
   }
 }
 
@@ -228,10 +228,10 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
   event LogFundsReceived(address sender, uint amount);
   event UpdatedTokenInformation(string newName, string newSymbol);
 
-  constructor(uint256 _totalTokensToMint) payable public {
+  constructor(uint256 totalTokensToMint) payable public {
     name = "Morality";
     symbol = "MO";
-    totalSupply = _totalTokensToMint;
+    totalSupply = totalTokensToMint;
     decimals = 18;
     balances[msg.sender] = totalSupply;
     creator = msg.sender;
@@ -242,24 +242,24 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
     emit LogFundsReceived(msg.sender, msg.value);
   }
   
-  function transfer(address _to, uint256 _value) public applicationLockdown returns (bool success){
-    return super.transfer(_to, _value);
+  function transfer(address to, uint256 value) public applicationLockdown returns (bool success){
+    return super.transfer(to, value);
   }
   
-  function transferFrom(address _from, address _to, uint256 _value) public applicationLockdown returns (bool success){
-    return super.transferFrom(_from, _to, _value);
+  function transferFrom(address from, address to, uint256 value) public applicationLockdown returns (bool success){
+    return super.transferFrom(from, to, value);
   }
   
-  function multipleTransfer(address[] calldata _toAddresses, uint256[] calldata _toValues) external applicationLockdown returns (bool) {
-    require(_toAddresses.length == _toValues.length);
-    for(uint256 i = 0;i<_toAddresses.length;i++){
-       require(super.transfer(_toAddresses[i], _toValues[i]) == true);
+  function multipleTransfer(address[] calldata toAddresses, uint256[] calldata toValues) external applicationLockdown returns (bool) {
+    require(toAddresses.length == toValues.length);
+    for(uint256 i = 0;i<toAddresses.length;i++){
+       require(super.transfer(toAddresses[i], toValues[i]) == true);
     }
     return true;
   }
   
-  function approve(address _spender, uint256 _value) public applicationLockdown returns (bool) {
-    return super.approve(_spender, _value);
+  function approve(address spender, uint256 value) public applicationLockdown returns (bool) {
+    return super.approve(spender, value);
   }
   
   function approveAndInvokePurchase(address tokenAddress, string memory collectionName, uint256 value) public ecpvcLockdown applicationLockdown returns(bool){
@@ -270,42 +270,42 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
     return super.approveAndInvokePurchase(tokenAddress, value);
   }
   
-  function setTokenInformation(string calldata _name, string calldata _symbol) onlyOwner external {
+  function setTokenInformation(string calldata newName, string calldata newSymbol) onlyOwner external {
     require(msg.sender != creator);
-    name = _name;
-    symbol = _symbol;
+    name = newName;
+    symbol = newSymbol;
     emit UpdatedTokenInformation(name, symbol);
   }
   
-  function withdraw(uint256 _amount) onlyOwner public returns(bool){
-	return super.withdraw(_amount);
+  function withdraw(uint256 amount) onlyOwner public returns(bool){
+	return super.withdraw(amount);
   }
 
-  function mintToken(address _target, uint256 _mintedAmount) onlyOwner public returns (bool){
-	return super.mintToken(_target, _mintedAmount);
+  function mintToken(address target, uint256 mintedAmount) onlyOwner public returns (bool){
+	return super.mintToken(target, mintedAmount);
   }
   
-  function burn(uint256 _burnAmount) onlyOwner public{
-    return super.burn(_burnAmount);
+  function burn(uint256 burnAmount) onlyOwner public{
+    return super.burn(burnAmount);
   }
   
-  function updateApplicationLockdownState(bool _state) onlyOwner public{
-    super.updateApplicationLockdownState(_state);
+  function updateApplicationLockdownState(bool state) onlyOwner public{
+    super.updateApplicationLockdownState(state);
   }
   
-  function updateECPLockdownState(bool _state) onlyOwner public{
-    super.updateECPLockdownState(_state);
+  function updateECPLockdownState(bool state) onlyOwner public{
+    super.updateECPLockdownState(state);
   }
   
-  function updateECPVCLockdownState(bool _state) onlyOwner public{
-    super.updateECPCVLockdownState(_state);
+  function updateECPVCLockdownState(bool state) onlyOwner public{
+    super.updateECPCVLockdownState(state);
   }
   
-  function recoverTokens(ERC20 _token) onlyOwner public{
-     super.recoverTokens(_token);
+  function recoverTokens(ERC20 token) onlyOwner public{
+     super.recoverTokens(token);
   }
   
-  function isToken() public pure returns (bool _weAre) {
+  function isToken() public pure returns (bool) {
     return true;
   }
 
