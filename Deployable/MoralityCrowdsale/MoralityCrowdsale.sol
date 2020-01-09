@@ -161,10 +161,10 @@ contract MoralityCrowdsale is CircuitBreaker, ReentrancyGuard {
         _preValidatePurchase(beneficiary, weiAmount);
         //Calculate token amount to sent
         uint256 tokens = _getTokenAmount(weiAmount);
-        //Update total raised
-        _weiRaised = _weiRaised.add(weiAmount);
         //Send tokens to beneficiary
         _processPurchase(beneficiary, tokens);
+        //Update total raised
+        _weiRaised = _weiRaised.add(weiAmount);
         //Update the event log
         emit TokensPurchased(msg.sender, beneficiary, weiAmount, tokens);
         //Forwad the funds to admin
