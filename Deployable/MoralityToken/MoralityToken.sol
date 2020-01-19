@@ -1,4 +1,4 @@
-pragma solidity ^0.5.11;
+pragma solidity ^0.5.12;
 
 library SafeMath {
     
@@ -25,31 +25,35 @@ library SafeMath {
 }
 
 contract Ownable {
-    
-  address payable public owner;
-  address payable public potentialNewOwner;
+  address payable internal _owner;
+  address payable internal _potentialNewOwner;
  
   event OwnershipTransferred(address payable indexed from, address payable indexed to);
 
   constructor() internal {
-    owner = msg.sender;
+    _owner = msg.sender;
   }
   modifier onlyOwner() {
-    require(msg.sender == owner);
+    require(msg.sender == _owner);
     _;
   }
   function transferOwnership(address payable newOwner) external onlyOwner {
-    potentialNewOwner = newOwner;
+    _potentialNewOwner = newOwner;
   }
   function acceptOwnership() external {
-    require(msg.sender == potentialNewOwner);
-    emit OwnershipTransferred(owner, potentialNewOwner);
-    owner = potentialNewOwner;
+    require(msg.sender == _potentialNewOwner);
+    emit OwnershipTransferred(_owner, _potentialNewOwner);
+    _owner = _potentialNewOwner;
+  }
+  function getOwner() view external returns(address){
+      return _owner;
+  }
+  function getPotentialNewOwner() view external returns(address){
+      return _potentialNewOwner;
   }
 }
 
 contract CircuitBreaker is Ownable {
-    
     bool private isApplicationLockedDown;
     // External contract payment via collection
     bool private isECPVCLockedDown;
@@ -129,59 +133,18 @@ contract ERC20 is ERC20Interface {
   }
 }
 
-contract MintableToken is ERC20, Ownable{
-    
-  event Minted(address target, uint mintedAmount, uint time);
-  
-  function mintToken(address target, uint256 mintedAmount) public onlyOwner returns(bool){
-	balances[target] = balances[target].add(mintedAmount);
-	totalSupply = totalSupply.add(mintedAmount);
-	emit Transfer(address(0), address(this), mintedAmount);
-	emit Transfer(address(this), target, mintedAmount);
-	emit Minted(target, mintedAmount, now);
-	return true;
-  }
-}
-
 contract RecoverableToken is ERC20, Ownable {
    
   event RecoveredTokens(address token, address owner, uint tokens, uint time);
   
   function recoverTokens(ERC20 token) public onlyOwner {
     uint tokens = tokensToBeReturned(token);
-    require(token.transfer(owner, tokens) == true);
-    emit RecoveredTokens(address(token), owner,  tokens, now);
+    require(token.transfer(_owner, tokens) == true);
+    emit RecoveredTokens(address(token), _owner,  tokens, now);
   }
   function tokensToBeReturned(ERC20 token) public view returns (uint256) {
     return token.balanceOf(address(this));
   }
-}
-
-contract BurnableToken is ERC20, Ownable {
-    
-  address public BURN_ADDRESS;
-
-  event Burned(address burner, uint256 burnedAmount);
- 
-  function burn(uint256 burnAmount) public onlyOwner {
-    address burner = msg.sender;
-    balances[burner] = balances[burner].sub(burnAmount);
-    totalSupply = totalSupply.sub(burnAmount);
-    emit Burned(burner, burnAmount);
-    emit Transfer(burner, BURN_ADDRESS, burnAmount);
-  }
-}
-
-contract WithdrawableToken is ERC20, Ownable {
-    
-  event WithdrawLog(uint256 balanceBefore, uint256 amount, uint256 balanceAfter);
-  
-  function withdraw(uint256 amount) public onlyOwner returns(bool){
-	require(amount <= address(this).balance);
-    address(owner).transfer(amount);
-	emit WithdrawLog(address(owner).balance.sub(amount), amount, address(owner).balance);
-    return true;
-  } 
 }
 
 contract IPurchasableToken{
@@ -217,7 +180,57 @@ contract ExternalContractInvocations is ERC20{
   }
 }
 
-contract Morality is RecoverableToken, BurnableToken, MintableToken, WithdrawableToken, 
+contract Crowdsale is Ownable{
+  uint256 private _rate;
+  uint256 internal _weiRaised;
+
+  using SafeMath for uint256;
+
+  event RateUpdate(uint256 rate);
+  event WalletUpdate(address wallet, address newWallet);
+
+  constructor (uint256 rate) public {
+    require(rate > 0);
+    _rate = rate;
+  }
+  
+  function wallet() external onlyOwner view returns (address) {
+    return _owner;
+  }
+
+  function rate() external view returns (uint256) {
+    return _rate;
+  }
+
+  function weiRaised() external view returns (uint256) {
+    return _weiRaised;
+  }
+    
+  function setRate(uint256 newRate) onlyOwner external{
+    _rate = newRate;
+    emit RateUpdate(newRate);
+  }
+  
+  function setWallet(address payable newWallet) onlyOwner external{
+     emit WalletUpdate(_owner, newWallet);
+    _owner = newWallet;
+  }
+    
+  function _preValidatePurchase(address beneficiary, uint256 weiAmount) internal pure {
+    require(beneficiary != address(0));
+    require(weiAmount != 0);
+  }
+
+  function _getTokenAmount(uint256 weiAmount) internal view returns (uint256) {
+    return weiAmount.mul(_rate);
+  }
+    
+  function _forwardFunds() internal {
+    _owner.transfer(msg.value);
+  }
+}
+
+contract Morality is RecoverableToken, Crowdsale,
   ExternalContractInvocations, CircuitBreaker { 
       
   string public name;
@@ -225,10 +238,10 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
   uint256 public decimals;
   address payable public creator;
   
+  event TokensPurchased(address indexed beneficiary, uint256 value, uint256 amount);
   event LogFundsReceived(address sender, uint amount);
-  event UpdatedTokenInformation(string newName, string newSymbol);
 
-  constructor(uint256 totalTokensToMint) payable public {
+  constructor(uint256 totalTokensToMint, uint256 crowdsaleRate) Crowdsale(crowdsaleRate) payable public {
     name = "Morality";
     symbol = "MO";
     totalSupply = totalTokensToMint;
@@ -239,6 +252,7 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
   }
   
   function() payable external applicationLockdown {
+    buyTokens();
     emit LogFundsReceived(msg.sender, msg.value);
   }
   
@@ -270,25 +284,16 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
     return super.approveAndInvokePurchase(tokenAddress, value);
   }
   
-  function setTokenInformation(string calldata newName, string calldata newSymbol) onlyOwner external {
-    require(msg.sender != creator);
-    name = newName;
-    symbol = newSymbol;
-    emit UpdatedTokenInformation(name, symbol);
-  }
-  
-  function withdraw(uint256 amount) onlyOwner public returns(bool){
-	return super.withdraw(amount);
+  function buyTokens() internal applicationLockdown {
+    uint256 weiAmount = msg.value;
+     _preValidatePurchase(msg.sender, weiAmount);
+    uint256 tokens = _getTokenAmount(weiAmount);
+    transfer(msg.sender, tokens);
+    _weiRaised = _weiRaised.add(weiAmount);
+    //Forwad the funds to admin
+    _forwardFunds();
   }
 
-  function mintToken(address target, uint256 mintedAmount) onlyOwner public returns (bool){
-	return super.mintToken(target, mintedAmount);
-  }
-  
-  function burn(uint256 burnAmount) onlyOwner public{
-    return super.burn(burnAmount);
-  }
-  
   function updateApplicationLockdownState(bool state) onlyOwner public{
     super.updateApplicationLockdownState(state);
   }
@@ -297,7 +302,7 @@ contract Morality is RecoverableToken, BurnableToken, MintableToken, Withdrawabl
     super.updateECPLockdownState(state);
   }
   
-  function updateECPVCLockdownState(bool state) onlyOwner public{
+  function updateECPCVLockdownState(bool state) onlyOwner public{
     super.updateECPCVLockdownState(state);
   }
   
