@@ -134,7 +134,6 @@ contract ERC20 is ERC20Interface {
 }
 
 contract RecoverableToken is ERC20, Ownable {
-   
   event RecoveredTokens(address token, address owner, uint tokens, uint time);
   
   function recoverTokens(ERC20 token) public onlyOwner {
@@ -156,7 +155,6 @@ contract ITradableToken{
 }
 
 contract ExternalContractInvocations is ERC20{
-     
   enum ExternalPurchaseType{
       Item,
       Token
@@ -209,11 +207,6 @@ contract Crowdsale is Ownable{
   function setRate(uint256 newRate) onlyOwner external{
     _rate = newRate;
     emit RateUpdate(newRate);
-  }
-  
-  function setWallet(address payable newWallet) onlyOwner external{
-     emit WalletUpdate(_owner, newWallet);
-    _owner = newWallet;
   }
     
   function _preValidatePurchase(address beneficiary, uint256 weiAmount) internal pure {
@@ -312,9 +305,5 @@ contract Morality is RecoverableToken, Crowdsale,
   
   function isToken() public pure returns (bool) {
     return true;
-  }
-
-  function deprecateContract() onlyOwner external{
-    selfdestruct(creator);
   }
 }
