@@ -190,10 +190,6 @@ contract Crowdsale is Ownable{
     require(rate > 0);
     _rate = rate;
   }
-  
-  function wallet() external onlyOwner view returns (address) {
-    return _owner;
-  }
 
   function rate() external view returns (uint256) {
     return _rate;
