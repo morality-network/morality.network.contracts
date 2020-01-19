@@ -241,14 +241,14 @@ contract Morality is RecoverableToken, Crowdsale,
   event TokensPurchased(address indexed beneficiary, uint256 value, uint256 amount);
   event LogFundsReceived(address sender, uint amount);
 
-  constructor(uint256 totalTokensToMint, uint256 crowdsaleRate) Crowdsale(crowdsaleRate) payable public {
+  constructor(uint256 totalTokensToMint, uint256 crowdsaleRate) Crowdsale(crowdsaleRate) public {
     name = "Morality";
     symbol = "MO";
     totalSupply = totalTokensToMint;
     decimals = 18;
     balances[msg.sender] = totalSupply;
+    emit Transfer(address(0), msg.sender, totalSupply);
     creator = msg.sender;
-    emit LogFundsReceived(msg.sender, msg.value);
   }
   
   function() payable external applicationLockdown {
