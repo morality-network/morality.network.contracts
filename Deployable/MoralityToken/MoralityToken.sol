@@ -185,7 +185,6 @@ contract Crowdsale is Ownable{
   using SafeMath for uint256;
 
   event RateUpdate(uint256 rate);
-  event WalletUpdate(address wallet, address newWallet);
 
   constructor (uint256 rate) public {
     require(rate > 0);
