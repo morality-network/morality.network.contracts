@@ -1,4 +1,4 @@
-pragma solidity ^0.5.12;
+pragma solidity ^0.5.17;
 
 library SafeMath {
     
@@ -225,6 +225,7 @@ contract Morality is RecoverableToken, Crowdsale,
   string public symbol;
   uint256 public decimals;
   address payable public creator;
+  bool internal _saleActive;
   
   event TokensPurchased(address indexed beneficiary, uint256 value, uint256 amount);
   event LogFundsReceived(address sender, uint amount);
@@ -237,6 +238,10 @@ contract Morality is RecoverableToken, Crowdsale,
     balances[msg.sender] = totalSupply;
     emit Transfer(address(0), msg.sender, totalSupply);
     creator = msg.sender;
+  }
+  
+  function manageSale(bool state) public onlyOwner{
+      _saleActive = state;
   }
   
   function() payable external applicationLockdown {
@@ -273,6 +278,7 @@ contract Morality is RecoverableToken, Crowdsale,
   }
   
   function buyTokens() internal applicationLockdown {
+    require(_saleActive == true, "Sale is not active");
     uint256 weiAmount = msg.value;
      _preValidatePurchase(msg.sender, weiAmount);
     uint256 tokens = _getTokenAmount(weiAmount);
