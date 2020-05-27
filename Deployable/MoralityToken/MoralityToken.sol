@@ -193,12 +193,14 @@ contract ExternalContractInvocations is ERC20{
 }
 
 contract Crowdsale is Ownable{
+  uint256 private _cap;
   uint256 private _rate;
   uint256 internal _weiRaised;
 
   using SafeMath for uint256;
 
-  event RateUpdate(uint256 rate);
+  event RateUpdate(uint256 rate, uint date);
+  event CapUpdate(uint256 cap, uint date);
 
   constructor (uint256 rate) public {
     require(rate > 0);
@@ -208,6 +210,10 @@ contract Crowdsale is Ownable{
   function rate() external view returns (uint256) {
     return _rate;
   }
+  
+  function cap() external view returns (uint256) {
+    return _cap;
+  }
 
   function weiRaised() external view returns (uint256) {
     return _weiRaised;
@@ -215,7 +221,12 @@ contract Crowdsale is Ownable{
     
   function setRate(uint256 newRate) onlyOwner external{
     _rate = newRate;
-    emit RateUpdate(newRate);
+    emit RateUpdate(newRate, now);
+  }
+  
+  function setCapInWei(uint256 amount) onlyOwner external{
+    _cap = amount;
+    emit CapUpdate(amount, now);
   }
     
   function _preValidatePurchase(address beneficiary, uint256 weiAmount) internal pure {
@@ -223,12 +234,16 @@ contract Crowdsale is Ownable{
     require(weiAmount != 0);
   }
 
-  function _getTokenAmount(uint256 weiAmount) internal view returns (uint256) {
+  function _getTokenAmount(uint256 weiAmount) internal view returns(uint256) {
     return weiAmount.mul(_rate);
+  }
+  
+  function doesPurchaseExceedCapOfWeiRaised(uint amount) public view returns(bool) {
+    return (amount.add(_weiRaised) > _cap);
   }
     
   function _forwardFunds() internal {
-    _owner.transfer(msg.value);
+     _owner.transfer(msg.value);
   }
 }
 
@@ -254,12 +269,13 @@ contract Morality is RecoverableToken, Crowdsale,
     emit Transfer(address(0), msg.sender, totalTokensToSendToAdmin);
     //Keep an amount in contract
     balances[address(this)] = totalTokensToMint.sub(totalTokensToSendToAdmin);
-    emit Transfer(address(0), msg.sender, totalTokensToMint.sub(totalTokensToSendToAdmin));
+    emit Transfer(address(0), address(this), totalTokensToMint.sub(totalTokensToSendToAdmin));
     // Set creator
     creator = msg.sender;
   }
   
   function() payable external applicationLockdown saleActive{
+    require(doesPurchaseExceedCapOfWeiRaised(msg.value), "Purchase would bring sale value to greater that cap. Try buying less");
     buyTokens();
     emit LogFundsReceived(msg.sender, msg.value, now);
   }
@@ -292,7 +308,7 @@ contract Morality is RecoverableToken, Crowdsale,
     return super.approveAndInvokePurchase(tokenAddress, value);
   }
   
-  function buyTokens() internal applicationLockdown saleActive{
+  function buyTokens() internal applicationLockdown saleActive returns(uint256){
     uint256 weiAmount = msg.value;
      _preValidatePurchase(msg.sender, weiAmount);
     uint256 tokens = _getTokenAmount(weiAmount);
@@ -300,6 +316,7 @@ contract Morality is RecoverableToken, Crowdsale,
     _weiRaised = _weiRaised.add(weiAmount);
     //Forwad the funds to admin
     _forwardFunds();
+    return tokens;
   }
   
   function manageSale(bool state) onlyOwner public{
