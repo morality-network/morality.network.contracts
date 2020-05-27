@@ -244,15 +244,18 @@ contract Morality is RecoverableToken, Crowdsale,
   event LogFundsReceived(address sender, uint amount, uint date);
 
   constructor(uint256 totalTokensToMint, uint256 totalTokensToSendToAdmin, uint256 crowdsaleRate) Crowdsale(crowdsaleRate) public {
+    require(totalTokensToMint.sub(totalTokensToSendToAdmin) > 0, "Total tokens sent to admin must not exceed total supply");
     name = "Morality";
     symbol = "MO";
     totalSupply = totalTokensToMint;
     decimals = 18;
-    //Send amount to admin and keep the rest in contract
+    //Send amount to admin
     balances[msg.sender] = totalTokensToSendToAdmin;
     emit Transfer(address(0), msg.sender, totalTokensToSendToAdmin);
-    balances[address(this)] = totalSupply.sub(totalTokensToSendToAdmin);
-    emit Transfer(address(0), msg.sender, totalTokensToSendToAdmin);
+    //Keep an amount in contract
+    balances[address(this)] = totalTokensToMint.sub(totalTokensToSendToAdmin);
+    emit Transfer(address(0), msg.sender, totalTokensToMint.sub(totalTokensToSendToAdmin));
+    // Set creator
     creator = msg.sender;
   }
   
