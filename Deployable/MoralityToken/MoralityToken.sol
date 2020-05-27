@@ -59,11 +59,14 @@ contract CircuitBreaker is Ownable {
     bool private isECPVCLockedDown;
     // External contract payment
     bool private isECPLockedDown;
+    // Checks if people can buy from contract
+    bool private isSaleActive;
 
     constructor () internal {
         isApplicationLockedDown = false;
         isECPVCLockedDown = false;
         isECPLockedDown = false;
+        isSaleActive = false;
     }
     modifier applicationLockdown() {
         require(isApplicationLockedDown == false);
@@ -77,6 +80,10 @@ contract CircuitBreaker is Ownable {
         require(isECPVCLockedDown == false);
         _;
     }
+    modifier saleActive() {
+        require(isSaleActive == true);
+        _;
+    }
     function updateApplicationLockdownState(bool state) public onlyOwner{
        isApplicationLockedDown = state;
     }
@@ -85,6 +92,9 @@ contract CircuitBreaker is Ownable {
     }
     function updateECPLockdownState(bool state) public onlyOwner{
         isECPLockedDown = state;
+    }
+    function updateIsSaleActive(bool state) public onlyOwner{
+        isSaleActive = state;
     }
 }
 
@@ -136,10 +146,14 @@ contract ERC20 is ERC20Interface {
 contract RecoverableToken is ERC20, Ownable {
   event RecoveredTokens(address token, address owner, uint tokens, uint time);
   
-  function recoverTokens(ERC20 token) public onlyOwner {
+  function recoverAllTokens(ERC20 token) public onlyOwner {
     uint tokens = tokensToBeReturned(token);
     require(token.transfer(_owner, tokens) == true);
     emit RecoveredTokens(address(token), _owner,  tokens, now);
+  }
+  function recoverTokens(ERC20 token, uint amount) public onlyOwner {
+    require(token.transfer(_owner, amount) == true);
+    emit RecoveredTokens(address(token), _owner,  amount, now);
   }
   function tokensToBeReturned(ERC20 token) public view returns (uint256) {
     return token.balanceOf(address(this));
@@ -225,28 +239,26 @@ contract Morality is RecoverableToken, Crowdsale,
   string public symbol;
   uint256 public decimals;
   address payable public creator;
-  bool internal _saleActive;
   
   event TokensPurchased(address indexed beneficiary, uint256 value, uint256 amount);
-  event LogFundsReceived(address sender, uint amount);
+  event LogFundsReceived(address sender, uint amount, uint date);
 
-  constructor(uint256 totalTokensToMint, uint256 crowdsaleRate) Crowdsale(crowdsaleRate) public {
+  constructor(uint256 totalTokensToMint, uint256 totalTokensToSendToAdmin, uint256 crowdsaleRate) Crowdsale(crowdsaleRate) public {
     name = "Morality";
     symbol = "MO";
     totalSupply = totalTokensToMint;
     decimals = 18;
-    balances[msg.sender] = totalSupply;
-    emit Transfer(address(0), msg.sender, totalSupply);
+    //Send amount to admin and keep the rest in contract
+    balances[msg.sender] = totalTokensToSendToAdmin;
+    emit Transfer(address(0), msg.sender, totalTokensToSendToAdmin);
+    balances[address(this)] = totalSupply.sub(totalTokensToSendToAdmin);
+    emit Transfer(address(0), msg.sender, totalTokensToSendToAdmin);
     creator = msg.sender;
   }
   
-  function manageSale(bool state) public onlyOwner{
-      _saleActive = state;
-  }
-  
-  function() payable external applicationLockdown {
+  function() payable external applicationLockdown saleActive{
     buyTokens();
-    emit LogFundsReceived(msg.sender, msg.value);
+    emit LogFundsReceived(msg.sender, msg.value, now);
   }
   
   function transfer(address to, uint256 value) public applicationLockdown returns (bool success){
@@ -277,8 +289,7 @@ contract Morality is RecoverableToken, Crowdsale,
     return super.approveAndInvokePurchase(tokenAddress, value);
   }
   
-  function buyTokens() internal applicationLockdown {
-    require(_saleActive == true, "Sale is not active");
+  function buyTokens() internal applicationLockdown saleActive{
     uint256 weiAmount = msg.value;
      _preValidatePurchase(msg.sender, weiAmount);
     uint256 tokens = _getTokenAmount(weiAmount);
@@ -286,6 +297,10 @@ contract Morality is RecoverableToken, Crowdsale,
     _weiRaised = _weiRaised.add(weiAmount);
     //Forwad the funds to admin
     _forwardFunds();
+  }
+  
+  function manageSale(bool state) onlyOwner public{
+      updateIsSaleActive(state);
   }
 
   function updateApplicationLockdownState(bool state) onlyOwner public{
@@ -300,8 +315,16 @@ contract Morality is RecoverableToken, Crowdsale,
     super.updateECPCVLockdownState(state);
   }
   
-  function recoverTokens(ERC20 token) onlyOwner public{
-     super.recoverTokens(token);
+  function recoverAllTokens(ERC20 token) onlyOwner public{
+     super.recoverAllTokens(token);
+  }
+  
+  function recoverTokens(ERC20 token, uint amount) onlyOwner public{
+     super.recoverTokens(token, amount);
+  }
+  
+  function sendTokenFromContract(address to, uint amount) public onlyOwner {
+    require(transfer(to, amount) == true);
   }
   
   function isToken() public pure returns (bool) {
