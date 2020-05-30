@@ -93,8 +93,11 @@ contract CircuitBreaker is Ownable {
     function updateECPLockdownState(bool state) public onlyOwner{
         isECPLockedDown = state;
     }
-    function updateIsSaleActive(bool state) public onlyOwner{
+    function updateSaleState(bool state) public onlyOwner{
         isSaleActive = state;
+    }
+    function isSaleOpen() public view returns(bool){
+        return isSaleActive;
     }
 }
 
@@ -317,30 +320,6 @@ contract Morality is RecoverableToken, Crowdsale,
     //Forwad the funds to admin
     _forwardFunds();
     return tokens;
-  }
-  
-  function manageSale(bool state) onlyOwner public{
-      updateIsSaleActive(state);
-  }
-
-  function updateApplicationLockdownState(bool state) onlyOwner public{
-    super.updateApplicationLockdownState(state);
-  }
-  
-  function updateECPLockdownState(bool state) onlyOwner public{
-    super.updateECPLockdownState(state);
-  }
-  
-  function updateECPCVLockdownState(bool state) onlyOwner public{
-    super.updateECPCVLockdownState(state);
-  }
-  
-  function recoverAllTokens(ERC20 token) onlyOwner public{
-     super.recoverAllTokens(token);
-  }
-  
-  function recoverTokens(ERC20 token, uint amount) onlyOwner public{
-     super.recoverTokens(token, amount);
   }
   
   function sendTokenFromContract(address to, uint amount) public onlyOwner {
