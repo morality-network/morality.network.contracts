@@ -213,15 +213,15 @@ contract Crowdsale is Ownable{
     _rate = rate;
   }
 
-  function rate() external view returns (uint256) {
+  function rate() public view returns (uint256) {
     return _rate;
   }
   
-  function cap() external view returns (uint256) {
+  function cap() public view returns (uint256) {
     return _cap;
   }
 
-  function weiRaised() external view returns (uint256) {
+  function weiRaised() public view returns (uint256) {
     return _weiRaised;
   }
     
@@ -235,10 +235,6 @@ contract Crowdsale is Ownable{
     emit CapUpdate(_owner, amount, now);
   }
   
-  function getRate() public view returns(uint256){
-    return _rate;
-  }
-    
   function _preValidatePurchase(address beneficiary, uint256 weiAmount) internal pure {
     require(beneficiary != address(0));
     require(weiAmount != 0);
@@ -287,7 +283,7 @@ contract Morality is RecoverableToken, Crowdsale,
   function() payable external applicationLockdown saleActive{
     require(doesPurchaseExceedCapOfWeiRaised(msg.value) == false, "Purchase would bring sale value to greater that cap. Try buying less");
     uint256 tokens = _buyTokens(msg.value);
-    emit TokensPurchased(msg.sender, msg.value, tokens, getRate(), now);
+    emit TokensPurchased(msg.sender, msg.value, tokens, rate(), now);
   }
   
   function transfer(address to, uint256 value) public applicationLockdown returns (bool success){
@@ -318,7 +314,7 @@ contract Morality is RecoverableToken, Crowdsale,
     return super.approveAndInvokePurchase(tokenAddress, value);
   }
   
-  function sendTokenFromContract(address to, uint value) public onlyOwner {
+  function sendTokensFromContract(address to, uint value) public onlyOwner {
     ERC20 token = ERC20(address(this));
     token.transfer(to, value);
     emit TransferFromContract(to, value, now);
