@@ -281,8 +281,8 @@ contract Morality is RecoverableToken, Crowdsale,
   }
   
   function() payable external applicationLockdown saleActive{
-    require(doesPurchaseExceedCapOfWeiRaised(msg.value), "Purchase would bring sale value to greater that cap. Try buying less");
-    uint tokens = buyTokens();
+    require(doesPurchaseExceedCapOfWeiRaised(msg.value) == false, "Purchase would bring sale value to greater that cap. Try buying less");
+    uint tokens = _buyTokens(msg.value);
     emit TokensPurchased(msg.sender, tokens, now);
   }
   
@@ -314,13 +314,12 @@ contract Morality is RecoverableToken, Crowdsale,
     return super.approveAndInvokePurchase(tokenAddress, value);
   }
   
-  function buyTokens() internal applicationLockdown saleActive returns(uint256){
-    uint256 weiAmount = msg.value;
-     _preValidatePurchase(msg.sender, weiAmount);
+  function _buyTokens(uint256 weiAmount) internal returns(uint256){
+    _preValidatePurchase(msg.sender, weiAmount);
     uint256 tokens = _getTokenAmount(weiAmount);
     //Transfer from contract (current)
-    balances[address(this)] = balances[address(this)].sub(weiAmount);
-    balances[msg.sender] = balances[msg.sender].add(weiAmount);
+    balances[address(this)] = balances[address(this)].sub(tokens);
+    balances[msg.sender] = balances[msg.sender].add(tokens);
     _weiRaised = _weiRaised.add(weiAmount);
     //Forwad the funds to admin
     _forwardFunds();
