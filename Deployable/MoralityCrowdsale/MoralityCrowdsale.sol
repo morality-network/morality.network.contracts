@@ -261,8 +261,8 @@ contract Morality is RecoverableToken, Crowdsale,
   uint256 public decimals;
   address payable public creator;
   
-  event TokensPurchased(address indexed beneficiary, uint256 value, uint256 amount);
-  event LogFundsReceived(address sender, uint amount, uint date);
+  event TransferFromContract(address to, uint value, uint date);
+  event TokensPurchased(address indexed beneficiary, uint256 value, uint date);
 
   constructor(uint256 totalTokensToMint, uint256 totalTokensToSendToAdmin, uint256 crowdsaleRate) Crowdsale(crowdsaleRate) public {
     require(totalTokensToMint.sub(totalTokensToSendToAdmin) > 0, "Total tokens sent to admin must not exceed total supply");
@@ -282,8 +282,8 @@ contract Morality is RecoverableToken, Crowdsale,
   
   function() payable external applicationLockdown saleActive{
     require(doesPurchaseExceedCapOfWeiRaised(msg.value), "Purchase would bring sale value to greater that cap. Try buying less");
-    buyTokens();
-    emit LogFundsReceived(msg.sender, msg.value, now);
+    uint tokens = buyTokens();
+    emit TokensPurchased(msg.sender, tokens, now);
   }
   
   function transfer(address to, uint256 value) public applicationLockdown returns (bool success){
@@ -319,17 +319,18 @@ contract Morality is RecoverableToken, Crowdsale,
      _preValidatePurchase(msg.sender, weiAmount);
     uint256 tokens = _getTokenAmount(weiAmount);
     //Transfer from contract (current)
-    approve(msg.sender, tokens);
-    transferFrom(address(this), msg.sender, tokens);
+    balances[address(this)] = balances[address(this)].sub(weiAmount);
+    balances[msg.sender] = balances[msg.sender].add(weiAmount);
     _weiRaised = _weiRaised.add(weiAmount);
     //Forwad the funds to admin
     _forwardFunds();
     return tokens;
   }
   
-  function sendTokenFromContract(address to, uint amount) public onlyOwner {
-    approve(to, amount);
-    transferFrom(address(this), to, amount);
+  function sendTokenFromContract(address to, uint value) public onlyOwner {
+    balances[address(this)] = balances[address(this)].sub(value);
+    balances[to] = balances[to].add(value);
+    emit TransferFromContract(to, value, now);
   }
   
   function isToken() public pure returns (bool) {
