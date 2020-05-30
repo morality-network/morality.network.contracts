@@ -54,53 +54,53 @@ contract Ownable {
 }
 
 contract CircuitBreaker is Ownable {
-    bool private isApplicationLockedDown;
+    bool private _isApplicationLockedDown;
     // External contract payment via collection
-    bool private isECPVCLockedDown;
+    bool private _isECPVCLockedDown;
     // External contract payment
-    bool private isECPLockedDown;
+    bool private _isECPLockedDown;
     // Checks if people can buy from contract
-    bool private isSaleActive;
+    bool private _isSaleActive;
     
     event SaleStateUpdated(address sender, bool state, uint now);
 
     constructor () internal {
-        isApplicationLockedDown = false;
-        isECPVCLockedDown = false;
-        isECPLockedDown = false;
-        isSaleActive = false;
+        _isApplicationLockedDown = false;
+        _isECPVCLockedDown = false;
+        _isECPLockedDown = false;
+        _isSaleActive = false;
     }
     modifier applicationLockdown() {
-        require(isApplicationLockedDown == false);
+        require(_isApplicationLockedDown == false);
         _;
     }
     modifier ecpvcLockdown() {
-        require(isECPVCLockedDown == false);
+        require(_isECPVCLockedDown == false);
         _;
     }
     modifier ecpLockdown() {
-        require(isECPVCLockedDown == false);
+        require(_isECPVCLockedDown == false);
         _;
     }
     modifier saleActive() {
-        require(isSaleActive == true);
+        require(_isSaleActive == true);
         _;
     }
     function updateApplicationLockdownState(bool state) public onlyOwner{
-       isApplicationLockedDown = state;
+       _isApplicationLockedDown = state;
     }
     function updateECPCVLockdownState(bool state) public onlyOwner{
-        isECPVCLockedDown = state;
+        _isECPVCLockedDown = state;
     }
     function updateECPLockdownState(bool state) public onlyOwner{
-        isECPLockedDown = state;
+        _isECPLockedDown = state;
     }
     function updateSaleState(bool state) public onlyOwner{
-        isSaleActive = state;
+        _isSaleActive = state;
         emit SaleStateUpdated(msg.sender, state, now);
     }
     function isSaleOpen() public view returns(bool){
-        return isSaleActive;
+        return _isSaleActive;
     }
 }
 
@@ -119,7 +119,7 @@ contract ERC20 is ERC20Interface {
   using SafeMath for uint256;
 
   mapping(address => uint256) public balances;
-  mapping (address => mapping (address => uint256)) private allowed;
+  mapping (address => mapping (address => uint256)) private _allowed;
 
   function balanceOf(address owner) view public returns (uint256 balance) {
     return balances[owner];
@@ -131,21 +131,21 @@ contract ERC20 is ERC20Interface {
     return true;
   }
   function transferFrom(address from, address to, uint256 value) public returns (bool) {
-    uint256 allowance = allowed[from][msg.sender];
+    uint256 allowance = _allowed[from][msg.sender];
     balances[from] = balances[from].sub(value);
-    allowed[from][msg.sender] = allowance.sub(value);
+    _allowed[from][msg.sender] = allowance.sub(value);
     balances[to] = balances[to].add(value);
     emit Transfer(from, to, value);
     return true;
   }
   function approve(address spender, uint256 value) public returns (bool) {
-    require((value == 0) || (allowed[msg.sender][spender] == 0));
-    allowed[msg.sender][spender] = value;
+    require((value == 0) || (_allowed[msg.sender][spender] == 0));
+    _allowed[msg.sender][spender] = value;
     emit Approval(msg.sender, spender, value);
     return true;
   }
   function allowance(address owner, address spender) view public returns (uint256 remaining) {
-    return allowed[owner][spender];
+    return _allowed[owner][spender];
   }
 }
 
@@ -314,6 +314,16 @@ contract Morality is RecoverableToken, Crowdsale,
     return super.approveAndInvokePurchase(tokenAddress, value);
   }
   
+  function sendTokenFromContract(address to, uint value) public onlyOwner {
+    balances[address(this)] = balances[address(this)].sub(value);
+    balances[to] = balances[to].add(value);
+    emit TransferFromContract(to, value, now);
+  }
+  
+  function isToken() public pure returns (bool) {
+    return true;
+  }
+  
   function _buyTokens(uint256 weiAmount) internal returns(uint256){
     _preValidatePurchase(msg.sender, weiAmount);
     uint256 tokens = _getTokenAmount(weiAmount);
@@ -324,15 +334,5 @@ contract Morality is RecoverableToken, Crowdsale,
     //Forwad the funds to admin
     _forwardFunds();
     return tokens;
-  }
-  
-  function sendTokenFromContract(address to, uint value) public onlyOwner {
-    balances[address(this)] = balances[address(this)].sub(value);
-    balances[to] = balances[to].add(value);
-    emit TransferFromContract(to, value, now);
-  }
-  
-  function isToken() public pure returns (bool) {
-    return true;
   }
 }
