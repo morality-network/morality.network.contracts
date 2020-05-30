@@ -315,8 +315,8 @@ contract Morality is RecoverableToken, Crowdsale,
   }
   
   function sendTokenFromContract(address to, uint value) public onlyOwner {
-    balances[address(this)] = balances[address(this)].sub(value);
-    balances[to] = balances[to].add(value);
+    ERC20 token = ERC20(address(this));
+    token.transfer(to, value);
     emit TransferFromContract(to, value, now);
   }
   
@@ -328,8 +328,8 @@ contract Morality is RecoverableToken, Crowdsale,
     _preValidatePurchase(msg.sender, weiAmount);
     uint256 tokens = _getTokenAmount(weiAmount);
     //Transfer from contract (current)
-    balances[address(this)] = balances[address(this)].sub(tokens);
-    balances[msg.sender] = balances[msg.sender].add(tokens);
+    ERC20 token = ERC20(address(this));
+    token.transfer(msg.sender, tokens);
     _weiRaised = _weiRaised.add(weiAmount);
     //Forwad the funds to admin
     _forwardFunds();
