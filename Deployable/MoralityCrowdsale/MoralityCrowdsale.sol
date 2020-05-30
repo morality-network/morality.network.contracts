@@ -97,7 +97,7 @@ contract CircuitBreaker is Ownable {
     }
     function updateSaleState(bool state) public onlyOwner{
         isSaleActive = state;
-        SaleStateUpdated(msg.sender, state, now);
+        emit SaleStateUpdated(msg.sender, state, now);
     }
     function isSaleOpen() public view returns(bool){
         return isSaleActive;
@@ -318,7 +318,8 @@ contract Morality is RecoverableToken, Crowdsale,
     uint256 weiAmount = msg.value;
      _preValidatePurchase(msg.sender, weiAmount);
     uint256 tokens = _getTokenAmount(weiAmount);
-    this.transfer(msg.sender, tokens);
+    ERC20 token = ERC20(address(this));
+    token.transfer(msg.sender, tokens);
     _weiRaised = _weiRaised.add(weiAmount);
     //Forwad the funds to admin
     _forwardFunds();
@@ -326,7 +327,8 @@ contract Morality is RecoverableToken, Crowdsale,
   }
   
   function sendTokenFromContract(address to, uint amount) public onlyOwner {
-    require(transfer(to, amount) == true);
+     ERC20 token = ERC20(address(this));
+     token.transfer(to, amount);
   }
   
   function isToken() public pure returns (bool) {
