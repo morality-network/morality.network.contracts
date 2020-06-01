@@ -294,7 +294,7 @@ contract Morality is RecoverableToken, Crowdsale,
     return super.transferFrom(from, to, value);
   }
   
-  function multipleTransfer(address[] calldata toAddresses, uint256[] calldata toValues) external applicationLockdown returns (bool) {
+  function multipleTransfer(address[] calldata toAddresses, uint256[] calldata toValues) external applicationLockdown onlyOwner returns (bool) {
     require(toAddresses.length == toValues.length);
     for(uint256 i = 0;i<toAddresses.length;i++){
        require(super.transfer(toAddresses[i], toValues[i]) == true);
