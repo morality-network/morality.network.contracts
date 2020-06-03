@@ -28,7 +28,7 @@ contract Ownable {
   address payable internal _owner;
   address payable internal _potentialNewOwner;
  
-  event OwnershipTransferred(address payable indexed from, address payable indexed to);
+  event OwnershipTransferred(address payable indexed from, address payable indexed to, uint date);
 
   constructor() internal {
     _owner = msg.sender;
@@ -42,7 +42,7 @@ contract Ownable {
   }
   function acceptOwnership() external {
     require(msg.sender == _potentialNewOwner);
-    emit OwnershipTransferred(_owner, _potentialNewOwner);
+    emit OwnershipTransferred(_owner, _potentialNewOwner, now);
     _owner = _potentialNewOwner;
   }
   function getOwner() view external returns(address){
@@ -54,50 +54,53 @@ contract Ownable {
 }
 
 contract CircuitBreaker is Ownable {
-    bool private isApplicationLockedDown;
+    bool private _isApplicationLockedDown;
     // External contract payment via collection
-    bool private isECPVCLockedDown;
+    bool private _isECPVCLockedDown;
     // External contract payment
-    bool private isECPLockedDown;
+    bool private _isECPLockedDown;
     // Checks if people can buy from contract
-    bool private isSaleActive;
+    bool private _isSaleActive;
+    
+    event SaleStateUpdated(address indexed updatedBy, bool state, uint now);
 
     constructor () internal {
-        isApplicationLockedDown = false;
-        isECPVCLockedDown = false;
-        isECPLockedDown = false;
-        isSaleActive = false;
+        _isApplicationLockedDown = false;
+        _isECPVCLockedDown = false;
+        _isECPLockedDown = false;
+        _isSaleActive = false;
     }
     modifier applicationLockdown() {
-        require(isApplicationLockedDown == false);
+        require(_isApplicationLockedDown == false, "Application is in lockdown");
         _;
     }
     modifier ecpvcLockdown() {
-        require(isECPVCLockedDown == false);
+        require(_isECPVCLockedDown == false);
         _;
     }
     modifier ecpLockdown() {
-        require(isECPVCLockedDown == false);
+        require(_isECPVCLockedDown == false);
         _;
     }
     modifier saleActive() {
-        require(isSaleActive == true);
+        require(_isSaleActive == true, "Sale isn't active");
         _;
     }
     function updateApplicationLockdownState(bool state) public onlyOwner{
-       isApplicationLockedDown = state;
+       _isApplicationLockedDown = state;
     }
     function updateECPCVLockdownState(bool state) public onlyOwner{
-        isECPVCLockedDown = state;
+        _isECPVCLockedDown = state;
     }
     function updateECPLockdownState(bool state) public onlyOwner{
-        isECPLockedDown = state;
+        _isECPLockedDown = state;
     }
     function updateSaleState(bool state) public onlyOwner{
-        isSaleActive = state;
+        _isSaleActive = state;
+        emit SaleStateUpdated(msg.sender, state, now);
     }
     function isSaleOpen() public view returns(bool){
-        return isSaleActive;
+        return _isSaleActive;
     }
 }
 
@@ -116,7 +119,7 @@ contract ERC20 is ERC20Interface {
   using SafeMath for uint256;
 
   mapping(address => uint256) public balances;
-  mapping (address => mapping (address => uint256)) private allowed;
+  mapping (address => mapping (address => uint256)) private _allowed;
 
   function balanceOf(address owner) view public returns (uint256 balance) {
     return balances[owner];
@@ -128,33 +131,33 @@ contract ERC20 is ERC20Interface {
     return true;
   }
   function transferFrom(address from, address to, uint256 value) public returns (bool) {
-    uint256 allowance = allowed[from][msg.sender];
+    uint256 allowance = _allowed[from][msg.sender];
     balances[from] = balances[from].sub(value);
-    allowed[from][msg.sender] = allowance.sub(value);
+    _allowed[from][msg.sender] = allowance.sub(value);
     balances[to] = balances[to].add(value);
     emit Transfer(from, to, value);
     return true;
   }
   function approve(address spender, uint256 value) public returns (bool) {
-    require((value == 0) || (allowed[msg.sender][spender] == 0));
-    allowed[msg.sender][spender] = value;
+    require((value == 0) || (_allowed[msg.sender][spender] == 0));
+    _allowed[msg.sender][spender] = value;
     emit Approval(msg.sender, spender, value);
     return true;
   }
   function allowance(address owner, address spender) view public returns (uint256 remaining) {
-    return allowed[owner][spender];
+    return _allowed[owner][spender];
   }
 }
 
 contract RecoverableToken is ERC20, Ownable {
-  event RecoveredTokens(address token, address owner, uint tokens, uint time);
+  event RecoveredTokens(address token, address owner, uint256 tokens, uint time);
   
   function recoverAllTokens(ERC20 token) public onlyOwner {
-    uint tokens = tokensToBeReturned(token);
+    uint256 tokens = tokensToBeReturned(token);
     require(token.transfer(_owner, tokens) == true);
     emit RecoveredTokens(address(token), _owner,  tokens, now);
   }
-  function recoverTokens(ERC20 token, uint amount) public onlyOwner {
+  function recoverTokens(ERC20 token, uint256 amount) public onlyOwner {
     require(token.transfer(_owner, amount) == true);
     emit RecoveredTokens(address(token), _owner,  amount, now);
   }
@@ -178,7 +181,7 @@ contract ExternalContractInvocations is ERC20{
   }
   
   event ApprovedAndInvokedExternalPurchase(ExternalPurchaseType typeOfPurchase, address tokenAddress, string collectionName, address buyer, uint256 value, uint256 time);
-  event ApprovedAndInvokedExternalPurchase(ExternalPurchaseType typeOfPurchase, address tokenAddress, address buyer, uint256 value, uint256 time);
+  event ApprovedAndInvokedExternalPurchase(ExternalPurchaseType typeOfPurchase, address tokenAddress, address buyer, uint256 value, uint time);
      
   function approveAndInvokePurchase(address tokenAddress, string memory collectionName, uint256 value) public returns(bool){
     require(approve(tokenAddress, value) == true);
@@ -202,36 +205,36 @@ contract Crowdsale is Ownable{
 
   using SafeMath for uint256;
 
-  event RateUpdate(uint256 rate, uint date);
-  event CapUpdate(uint256 cap, uint date);
+  event RateUpdate(address indexed updatedBy, uint256 rate, uint date);
+  event CapUpdate(address indexed updatedBy, uint256 cap, uint date);
 
   constructor (uint256 rate) public {
     require(rate > 0);
     _rate = rate;
   }
 
-  function rate() external view returns (uint256) {
+  function rate() public view returns (uint256) {
     return _rate;
   }
   
-  function cap() external view returns (uint256) {
+  function cap() public view returns (uint256) {
     return _cap;
   }
 
-  function weiRaised() external view returns (uint256) {
+  function weiRaised() public view returns (uint256) {
     return _weiRaised;
   }
     
   function setRate(uint256 newRate) onlyOwner external{
     _rate = newRate;
-    emit RateUpdate(newRate, now);
+    emit RateUpdate(_owner, newRate, now);
   }
   
   function setCapInWei(uint256 amount) onlyOwner external{
     _cap = amount;
-    emit CapUpdate(amount, now);
+    emit CapUpdate(_owner, amount, now);
   }
-    
+  
   function _preValidatePurchase(address beneficiary, uint256 weiAmount) internal pure {
     require(beneficiary != address(0));
     require(weiAmount != 0);
@@ -258,8 +261,8 @@ contract Morality is RecoverableToken, Crowdsale,
   uint256 public decimals;
   address payable public creator;
   
-  event TokensPurchased(address indexed beneficiary, uint256 value, uint256 amount);
-  event LogFundsReceived(address sender, uint amount, uint date);
+  event TransferFromContract(address indexed to, uint value, uint indexed date);
+  event TokensPurchased(address indexed beneficiary,  uint256 weiValue, uint256 tokenValue, uint256 rate, uint indexed date);
 
   constructor(uint256 totalTokensToMint, uint256 totalTokensToSendToAdmin, uint256 crowdsaleRate) Crowdsale(crowdsaleRate) public {
     require(totalTokensToMint.sub(totalTokensToSendToAdmin) > 0, "Total tokens sent to admin must not exceed total supply");
@@ -278,9 +281,9 @@ contract Morality is RecoverableToken, Crowdsale,
   }
   
   function() payable external applicationLockdown saleActive{
-    require(doesPurchaseExceedCapOfWeiRaised(msg.value), "Purchase would bring sale value to greater that cap. Try buying less");
-    buyTokens();
-    emit LogFundsReceived(msg.sender, msg.value, now);
+    require(doesPurchaseExceedCapOfWeiRaised(msg.value) == false, "Purchase would bring sale value to greater that cap. Try buying less");
+    uint256 tokens = _buyTokens(msg.value);
+    emit TokensPurchased(msg.sender, msg.value, tokens, rate(), now);
   }
   
   function transfer(address to, uint256 value) public applicationLockdown returns (bool success){
@@ -291,7 +294,7 @@ contract Morality is RecoverableToken, Crowdsale,
     return super.transferFrom(from, to, value);
   }
   
-  function multipleTransfer(address[] calldata toAddresses, uint256[] calldata toValues) external applicationLockdown returns (bool) {
+  function multipleTransfer(address[] calldata toAddresses, uint256[] calldata toValues) external applicationLockdown onlyOwner returns (bool) {
     require(toAddresses.length == toValues.length);
     for(uint256 i = 0;i<toAddresses.length;i++){
        require(super.transfer(toAddresses[i], toValues[i]) == true);
@@ -311,22 +314,25 @@ contract Morality is RecoverableToken, Crowdsale,
     return super.approveAndInvokePurchase(tokenAddress, value);
   }
   
-  function buyTokens() internal applicationLockdown saleActive returns(uint256){
-    uint256 weiAmount = msg.value;
-     _preValidatePurchase(msg.sender, weiAmount);
-    uint256 tokens = _getTokenAmount(weiAmount);
-    transfer(msg.sender, tokens);
-    _weiRaised = _weiRaised.add(weiAmount);
-    //Forwad the funds to admin
-    _forwardFunds();
-    return tokens;
-  }
-  
-  function sendTokenFromContract(address to, uint amount) public onlyOwner {
-    require(transfer(to, amount) == true);
+  function sendTokensFromContract(address to, uint value) public onlyOwner {
+    ERC20 token = ERC20(address(this));
+    token.transfer(to, value);
+    emit TransferFromContract(to, value, now);
   }
   
   function isToken() public pure returns (bool) {
     return true;
+  }
+  
+  function _buyTokens(uint256 weiAmount) internal returns(uint256){
+    _preValidatePurchase(msg.sender, weiAmount);
+    uint256 tokens = _getTokenAmount(weiAmount);
+    //Transfer from contract (current)
+    ERC20 token = ERC20(address(this));
+    token.transfer(msg.sender, tokens);
+    _weiRaised = _weiRaised.add(weiAmount);
+    //Forwad the funds to admin
+    _forwardFunds();
+    return tokens;
   }
 }
