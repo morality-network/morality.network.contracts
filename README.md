@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="180" height="160" src="https://i.postimg.cc/J0mKhXCD/mo.png">
+  <img width="180" height="160" src="Network Logo (for light backgrounds only).gif">
 </p>
 
 # Contracts
