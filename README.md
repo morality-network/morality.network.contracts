@@ -17,13 +17,13 @@ NONE
 
 **Description:** This is a contract that will point to all the latest versions of morality.networks working contracts. <br><br>
 **Address:** 0xb8f44da02ae0553792f71dfacf9233fdc83a841c <br>
-**Link on Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0xb8f44da02ae0553792f71dfacf9233fdc83a841c
+**Link to Rinkby.Etherscan:** https://rinkeby.etherscan.io/address/0xb8f44da02ae0553792f71dfacf9233fdc83a841c
 
 ## Morality Token Contract :moneybag:
 
 **Description:** This contract is the morality.network utility token known as Morality (MO). MO is used both in the crowdsale and the main application as a token of utility representing work done in the network. <br><br>
 **Address:** 0x4fD5b9B5dcc9a5D5931d007ba4aE573e760d9B64 <br>
-https://etherscan.io/token/0x4fD5b9B5dcc9a5D5931d007ba4aE573e760d9B64 <br>
+<strong>Link to Etherscan:</strong> https://etherscan.io/token/0x4fD5b9B5dcc9a5D5931d007ba4aE573e760d9B64 <br>
 
 Legacy: <br>
 **Constructor Arguments (decoded):** 1700000000000000000000000000 <br>
