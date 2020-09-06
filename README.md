@@ -23,6 +23,7 @@ NONE
 
 **Description:** This contract is the morality.network utility token known as Morality (MO). MO is used both in the crowdsale and the main application as a token of utility representing work done in the network. <br><br>
 **Address:** 0x4fD5b9B5dcc9a5D5931d007ba4aE573e760d9B64 <br>
+https://etherscan.io/token/0x4fD5b9B5dcc9a5D5931d007ba4aE573e760d9B64 <br>
 
 Legacy: <br>
 **Constructor Arguments (decoded):** 1700000000000000000000000000 <br>
