@@ -3,7 +3,7 @@
 </p>
 
 # Contracts
-Test & Deployable ERC20 & ERC721 Contracts (As Deployed on Rinkeby)
+Test & Deployable ERC20 & ERC721 Contracts (As Deployed on MainNet/Rinkeby)
 
 ## Bug Bounty :bug:
 
