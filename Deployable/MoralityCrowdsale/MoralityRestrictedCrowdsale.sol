@@ -90,7 +90,7 @@ contract Ownable {
 }
 
 // ------------------------------------------------------------------------
-// Create non ReentrancyGuard contract for buy tokens
+// Create non ReentrancyGuard contract for buy tokens (concurrency)
 // ------------------------------------------------------------------------
 contract ReentrancyGuard {
     
@@ -116,9 +116,31 @@ contract ReentrancyGuard {
 }
 
 // ------------------------------------------------------------------------
+// Create recoverable tokens
+// ------------------------------------------------------------------------
+contract RecoverableToken is IERC20, Ownable {
+  event RecoveredTokens(address token, address owner, uint256 tokens, uint time);
+  
+  function recoverAllTokens(IERC20 token) public onlyOwner {
+    uint256 tokens = tokensToBeReturned(token);
+    require(token.transfer(_owner, tokens) == true);
+    emit RecoveredTokens(address(token), _owner,  tokens, now);
+  }
+  
+  function recoverTokens(IERC20 token, uint256 amount) public onlyOwner {
+    require(token.transfer(_owner, amount) == true);
+    emit RecoveredTokens(address(token), _owner,  amount, now);
+  }
+  
+  function tokensToBeReturned(IERC20 token) public view returns (uint256) {
+    return token.balanceOf(address(this));
+  }
+}
+
+// ------------------------------------------------------------------------
 // Crowdsale wrapper contract
 // ------------------------------------------------------------------------
-contract Crowdsale is ReentrancyGuard, Ownable {
+contract Crowdsale is ReentrancyGuard, Ownable, RecoverableToken {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
