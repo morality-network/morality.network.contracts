@@ -127,7 +127,8 @@ contract Crowdsale is ReentrancyGuard, Ownable {
     // 1 wei will give you 1 unit
     uint256 private _rate;
     uint256 private _weiRaised;
-    mapping(address => bool) private _whitelistedAddresses;
+    
+    mapping(address => bool) public whitelistedAddresses;
 
     event TokensPurchased(address indexed purchaser, address indexed beneficiary, uint256 value, uint256 amount);
     event WalletUpdate(address indexed updatedBy, uint256 date, address newWallet);
@@ -183,34 +184,27 @@ contract Crowdsale is ReentrancyGuard, Ownable {
     }
     
     // ------------------------------------------------------------------------
+    // Sets the rate of wei to token
+    // ------------------------------------------------------------------------
+    function setRate(uint256 newRate) public onlyOwner{
+         _rate = newRate;
+    }
+    
+    // ------------------------------------------------------------------------
     // Adds/removes addresses from the whitelist to allow buy. This updates if already existing. (owner only)
     // ------------------------------------------------------------------------
     function updateWhitelistAddressStates(address[] memory addressesToUpdate, bool newState) public onlyOwner{
         for(uint i = 0;i<addressesToUpdate.length;i++){
-            _whitelistedAddresses[addressesToUpdate[i]] = newState;
+            whitelistedAddresses[addressesToUpdate[i]] = newState;
         }
     }
     
     // ------------------------------------------------------------------------
     // Update the wallet to recieve funds (owner only)
     // ------------------------------------------------------------------------
-    function updateWallet(address payable newWallet) public onlyOwner{
+    function updateCollectionWallet(address payable newWallet) public onlyOwner{
         _wallet = newWallet;
         emit WalletUpdate(msg.sender, now, newWallet);
-    }
-    
-    // ------------------------------------------------------------------------
-    // Get the wallet (owner only)
-    // ------------------------------------------------------------------------
-    function getWallet() public view onlyOwner returns(address){
-        return _wallet;
-    }
-    
-    // ------------------------------------------------------------------------
-    // Gets if the address provided has been whitelisted or not
-    // ------------------------------------------------------------------------
-    function getWhitelistState(address addressToCheck) public view onlyOwner returns(bool){
-        return _whitelistedAddresses[addressToCheck];
     }
 
     // ------------------------------------------------------------------------
@@ -219,7 +213,7 @@ contract Crowdsale is ReentrancyGuard, Ownable {
     // ------------------------------------------------------------------------
     function buyTokens(address beneficiary) public nonReentrant payable {
         // Ensure only KYC verified accounts can buy tokens
-        require(_whitelistedAddresses[beneficiary] == true, "Beneficiary address has not been verified");
+        require(whitelistedAddresses[beneficiary] == true, "Beneficiary address has not been verified");
         uint256 weiAmount = msg.value;
         _preValidatePurchase(beneficiary, weiAmount);
         //Calculate token amount to sent
