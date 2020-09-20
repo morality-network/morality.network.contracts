@@ -118,7 +118,7 @@ contract ReentrancyGuard {
 // ------------------------------------------------------------------------
 // Create recoverable tokens
 // ------------------------------------------------------------------------
-contract RecoverableToken is IERC20, Ownable {
+contract RecoverableToken is Ownable {
   event RecoveredTokens(address token, address owner, uint256 tokens, uint time);
   
   function recoverAllTokens(IERC20 token) public onlyOwner {
