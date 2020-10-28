@@ -75,31 +75,36 @@ contract TimeAccessible {
   event AccessGranted(address by, uint date);
 
   constructor(uint256 releaseTime) internal {
-    _releaseTime = releaseTime;
+      require(releaseTime > now, "Release time needs to be greater than now");
+      _releaseTime = releaseTime;
+  }
+  
+  function getReleaseTime() public view returns(uint256){
+      return _releaseTime;
   }
   
   modifier timeDependantAccess() {
-    require(block.timestamp >= _releaseTime, "Current time is before release time");
-    emit AccessGranted(msg.sender, now);
-    _;
+      require(block.timestamp >= _releaseTime, "Current time is before release time");
+      emit AccessGranted(msg.sender, now);
+      _;
   }
 }
 
 // ------------------------------------------------------------------------
 // Create recoverable tokens
 // ------------------------------------------------------------------------
-contract RecoverableToken is Ownable, TimeAccessible {
+contract RecoverableToken {
   event RecoveredTokens(address token, address owner, uint256 tokens, uint time);
   
-  function recoverAllTokens(IERC20 token) internal onlyOwner timeDependantAccess {
+  function recoverAllTokens(IERC20 token, address recoverAddress) internal {
     uint256 tokens = tokensToBeReturned(token);
-    require(token.transfer(_owner, tokens) == true);
-    emit RecoveredTokens(address(token), _owner,  tokens, now);
+    require(token.transfer(recoverAddress, tokens) == true);
+    emit RecoveredTokens(address(token), recoverAddress,  tokens, now);
   }
   
-  function recoverTokens(IERC20 token, uint256 amount) internal onlyOwner timeDependantAccess {
-    require(token.transfer(_owner, amount) == true);
-    emit RecoveredTokens(address(token), _owner,  amount, now);
+  function recoverTokens(IERC20 token, uint256 amount, address recoverAddress) internal {
+    require(token.transfer(recoverAddress, amount) == true);
+    emit RecoveredTokens(address(token), recoverAddress,  amount, now);
   }
   
   function tokensToBeReturned(IERC20 token) public view returns (uint256) {
@@ -113,23 +118,19 @@ contract RecoverableToken is Ownable, TimeAccessible {
 contract TimelockedFunds is Ownable, TimeAccessible, RecoverableToken {
     using SafeMath for uint256;
 
-    uint256 _releaseTime;
-
     event Withdraw(address indexed purchaser, address indexed beneficiary, uint256 amount, uint date);
     
-    constructor (uint256 releaseTime) public {
-        require(releaseTime > now, "Release time needs to be greater than now");
-        _releaseTime = releaseTime;
+    constructor (uint256 releaseTime) TimeAccessible(releaseTime) public {
     }
     
-    function withdraw(IERC20 tokenToWithdrawAmountFrom, uint256 amount) public{
+    function withdraw(IERC20 tokenToWithdrawAmountFrom, uint256 amount, address recoverAddress) public onlyOwner timeDependantAccess{
         require(block.timestamp >= _releaseTime, "Current time is before release time");
-        recoverTokens(tokenToWithdrawAmountFrom, amount);
+        recoverTokens(tokenToWithdrawAmountFrom, amount, recoverAddress);
     }
     
-    function withdrawAll(IERC20 tokenToWithdrawAllFrom) public{
+    function withdrawAll(IERC20 tokenToWithdrawAllFrom, address recoverAddress) public onlyOwner timeDependantAccess{
         require(block.timestamp >= _releaseTime, "Current time is before release time");
-        recoverAllTokens(tokenToWithdrawAllFrom);
+        recoverAllTokens(tokenToWithdrawAllFrom, recoverAddress);
     }
 }
 
