@@ -28,6 +28,14 @@ NONE
 **Constructor Arguments (encoded):** 000000000000000000000000000000000000000005a790ea17ace06a9600000000000000000000000000000000000000000000000000000cc15ca15bbbe90d800000000000000000000000000000000000000000000000000000000000000001 <br>
 **Link on Etherscan:** https://etherscan.io/token/0x4fD5b9B5dcc9a5D5931d007ba4aE573e760d9B64 <br>
 
+## Morality Binance Token Contract :moneybag:
+
+**Description:** This is a contract to be able to swap MO between the Ethereum and Binance network
+**Address:** 0x639780b6b8cc41da77aa8e0d79313fce08267c91 <br>
+**Constructor Arguments (encoded):** 0 <br>
+**Constructor Arguments (decoded):** 0000000000000000000000000000000000000000000000000000000000000000 <br>
+**Link on Binance.Test.Etherscan:** https://testnet.bscscan.com/address/0x639780b6b8cc41da77aa8e0d79313fce08267c91
+
 ## Morality Crowdsale Contract :family:
 
 **Description:** This contract is the point of call during the morality.network crowdsale. Tokens are allocated to this contract which are available for the public to purchase. If wei is transferred to the contract, a mapped amount of mo (the utility token) is sent back willing that the contract holds enough to honor the payment. <br><br>
