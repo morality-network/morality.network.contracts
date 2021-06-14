@@ -7,8 +7,8 @@ Test & Deployable ERC20 & ERC721 Contracts (As Deployed on MainNet/Rinkeby)
 
 ## Bug Bounty :bug:
 
-If you can find bugs or can identify major security issues of contracts in the "Deployable" folder, you will be given the equivalence of $25 in Eth and 3000MO tokens (the tokens will be given when the token contract is released onto MainNet). 
-You can email any suggestions/changes to: info@morality.network.
+If you can find bugs or can identify major security issues of contracts in the "Deployable" folder, you will be given the equivalence of $25 in ETH or MO.
+You can email any suggestions/changes to: info@morality.network
 
 User and identified issues:
 NONE
