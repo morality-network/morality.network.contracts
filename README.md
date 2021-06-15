@@ -36,7 +36,7 @@ NONE
 **Constructor Arguments (decoded):** 0000000000000000000000000000000000000000000000000000000000000000 <br>
 **Link on Binance.Test.Etherscan:** https://testnet.bscscan.com/address/0x639780b6b8cc41da77aa8e0d79313fce08267c91
 
-## Morality Crowdsale Contract :family:
+## Morality Crowdsale Contract :family: (Now Legacy)
 
 **Description:** This contract is the point of call during the morality.network crowdsale. Tokens are allocated to this contract which are available for the public to purchase. If wei is transferred to the contract, a mapped amount of mo (the utility token) is sent back willing that the contract holds enough to honor the payment. <br><br>
 **Address:** 0x4661e34ed783c519bd0ae3f6539f8241283dc4ba <br>
